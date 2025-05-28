@@ -33,18 +33,19 @@ async function init() {
 
   // Lights
   scene.add(new AmbientLight(0xffffff, 2));
+  // The Sun
   {
-    const directionalLight = new DirectionalLight(0xfffc9c, 0.5);
-    directionalLight.position.set(100, 100, 100);
-    directionalLight.castShadow = true;
-    // directionalLight.shadow.radius = 0
-    directionalLight.shadow.mapSize.set(2048, 2048);
-    scene.add(directionalLight);
-  }
-  {
-    const directionalLight = new DirectionalLight(0x00fffc, 0.9);
-    directionalLight.position.set(1, 0.25, 0);
-    scene.add(directionalLight);
+    const sun = new DirectionalLight(0xfff4e6, 1.2);
+    sun.position.set(50, 80, 30);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.near = 0.1;
+    sun.shadow.camera.far = 200;
+    sun.shadow.camera.left = -50;
+    sun.shadow.camera.right = 50;
+    sun.shadow.camera.top = 50;
+    sun.shadow.camera.bottom = -50;
+    scene.add(sun);
   }
 
   // Create rocks
