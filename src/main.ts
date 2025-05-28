@@ -1,9 +1,10 @@
-import { AmbientLight, DirectionalLight, Fog, Scene, Vector2, WebGLRenderer } from "three";
+import { AmbientLight, DirectionalLight, Fog, Scene, Vector2, Vector3, WebGLRenderer } from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { AssetLoader } from "./assetLoader";
 import { Boat } from "./boat";
 import { CameraController } from "./cameraController";
 import { DebugCube } from "./debugCube";
+import { Rock } from "./objects/rock";
 import RenderPixelatedPass from "./Passes/renderPixelatePass";
 import { settings } from "./settings";
 import { Water } from "./water";
@@ -44,6 +45,22 @@ async function init() {
     const directionalLight = new DirectionalLight(0x00fffc, 0.9);
     directionalLight.position.set(1, 0.25, 0);
     scene.add(directionalLight);
+  }
+
+  // Create rocks
+  const rockCount = 10;
+  const rocks: Rock[] = [];
+  for (let i = 0; i < rockCount; i++) {
+    const size = Math.random() < 0.5 ? "large" : "medium";
+    const x = (Math.random() - 0.5) * 20;
+    const z = (Math.random() - 0.5) * 20;
+    const position = new Vector3(x, 0, z);
+    const rock = new Rock(size, position);
+    const rockMesh = rock.getMesh();
+    if (rockMesh) {
+      scene.add(rockMesh);
+      rocks.push(rock);
+    }
   }
 
   const water = new Water();

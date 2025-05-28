@@ -33,7 +33,7 @@ export class Boat {
     const material = new MeshStandardMaterial({ color: 0xffffff });
     this.mesh = new Mesh(geometry, material);
     this.mesh.scale.set(0.02, 0.02, 0.02);
-    this.mesh.position.set(0, 0.5, 0);
+    this.mesh.position.set(0, 0, 0);
     this.mesh.rotation.set(-Math.PI / 2, 0, 0);
   }
 
@@ -114,7 +114,7 @@ export class Boat {
     this.mesh.position.add(this.velocity);
 
     // Keep boat at water level
-    this.mesh.position.y = 0.5;
+    this.mesh.position.y = 0.01;
   }
 
   public getPosition(): Vector3 {

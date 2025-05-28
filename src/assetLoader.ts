@@ -1,4 +1,5 @@
-import { BufferGeometry } from "three";
+import { BufferGeometry, Mesh } from "three";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 
 export class AssetLoader {
@@ -31,17 +32,24 @@ export class AssetLoader {
   }
 
   private async loadAllAssets(): Promise<void> {
-    const loader = new STLLoader();
+    const stlLoader = new STLLoader();
+    const fbxLoader = new FBXLoader();
 
     const assetList = [
-      { name: "benchy", path: "./assets/Benchy.stl" }
-      // Add more assets here as needed
+      { name: "benchy", path: "./assets/Benchy.stl", scale: 0.02, type: "stl" },
+      { name: "rocks", path: "./assets/Rocks.fbx", scale: 0.02, type: "fbx" }
     ];
 
     try {
       const loadPromises = assetList.map(async (asset) => {
-        const geometry = await this.loadSTL(loader, asset.path);
-        this.assets.set(asset.name, geometry);
+        if (asset.type === "stl") {
+          const geometry = await this.loadSTL(stlLoader, asset.path);
+          this.assets.set(asset.name, geometry);
+        } else if (asset.type === "fbx") {
+          await this.loadFBX(fbxLoader, asset.path);
+        } else {
+          throw new Error(`Unsupported asset type: ${asset.type}`);
+        }
       });
 
       await Promise.all(loadPromises);
@@ -58,6 +66,32 @@ export class AssetLoader {
       loader.load(
         path,
         (geometry) => resolve(geometry),
+        undefined,
+        (error) => reject(error)
+      );
+    });
+  }
+
+  private loadFBX(loader: FBXLoader, path: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      loader.load(
+        path,
+        (fbx) => {
+          console.log("FBX loaded:", fbx);
+
+          // Extract geometries from all child meshes
+          fbx.traverse((child) => {
+            if (child.type === "Mesh") {
+              const mesh = child as Mesh;
+              if (mesh.geometry && mesh.name) {
+                console.log(`Found mesh: ${mesh.name}`);
+                this.assets.set(mesh.name, mesh.geometry);
+              }
+            }
+          });
+
+          resolve();
+        },
         undefined,
         (error) => reject(error)
       );
