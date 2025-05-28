@@ -24,7 +24,7 @@ export class CameraController {
       settings.cameraFar
     );
 
-    this.offset = new Vector3(0, 2, 3);
+    this.offset = new Vector3(0, 2.5, 3);
     this.lerpFactor = 0.05;
 
     this.camera.position.set(0, 0, 0);

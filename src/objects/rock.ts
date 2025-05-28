@@ -3,6 +3,19 @@ import { Mesh, MeshStandardMaterial, Vector3 } from "three";
 import { AssetLoader } from "../assetLoader";
 import { PhysicsManager } from "../physics/physicsManager";
 
+const ROCK_VARIANTS = {
+  large: {
+    assetName: "LargeRock",
+    colliderRadius: 0.9,
+    scale: 3
+  },
+  medium: {
+    assetName: "MediumRock",
+    colliderRadius: 0.7,
+    scale: 3
+  }
+} as const;
+
 export class Rock {
   private mesh: Mesh | null = null;
   // shut up, yes its intiialised in the constructor
@@ -15,11 +28,11 @@ export class Rock {
   }
 
   private createMesh(size: "large" | "medium", position: Vector3) {
-    const assetName = size === "large" ? "LargeRock" : "MediumRock";
-    const geometry = AssetLoader.getInstance().getAsset(assetName);
+    const variant = ROCK_VARIANTS[size];
+    const geometry = AssetLoader.getInstance().getAsset(variant.assetName);
 
     if (!geometry) {
-      console.error(`${assetName} model not loaded!`);
+      console.error(`${variant.assetName} model not loaded!`);
       return;
     }
 
@@ -27,19 +40,19 @@ export class Rock {
     this.mesh = new Mesh(geometry, material);
     this.mesh.position.copy(position);
     this.mesh.rotation.x = Math.PI;
-    this.mesh.scale.set(3, 3, 3);
+    this.mesh.scale.set(variant.scale, variant.scale, variant.scale);
   }
 
   private setupPhysics(size: "large" | "medium", position: Vector3) {
     const world = PhysicsManager.getInstance().getWorld();
+    const variant = ROCK_VARIANTS[size];
 
     // Create static rigid body for the rock
     const rigidBodyDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(position.x, position.y, position.z);
     this.rigidBody = world.createRigidBody(rigidBodyDesc);
 
     // Create collider with size based on rock type
-    const radius = size === "large" ? 1.5 : 1.0;
-    const colliderDesc = RAPIER.ColliderDesc.ball(radius);
+    const colliderDesc = RAPIER.ColliderDesc.ball(variant.colliderRadius);
     this.collider = world.createCollider(colliderDesc, this.rigidBody);
 
     // Create debug visualization

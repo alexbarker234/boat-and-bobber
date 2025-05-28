@@ -4,7 +4,7 @@ import * as THREE from "three";
 export class PhysicsManager {
   private static instance: PhysicsManager;
   private world: RAPIER.World;
-  private debugMeshes: THREE.Mesh[] = [];
+  private debugMeshes: Map<number, THREE.Mesh> = new Map();
   private debugScene: THREE.Scene;
 
   private constructor(debugScene: THREE.Scene) {
@@ -62,20 +62,19 @@ export class PhysicsManager {
     });
 
     const mesh = new THREE.Mesh(geometry, material);
-    this.debugMeshes.push(mesh);
+    this.debugMeshes.set(collider.handle, mesh);
     this.debugScene.add(mesh);
   }
 
   private updateDebugMeshes() {
-    for (let i = 0; i < this.world.colliders.len(); i++) {
-      const collider = this.world.colliders.get(i);
-      if (!collider) continue;
-      if (this.debugMeshes[i]) {
+    this.debugMeshes.forEach((mesh, handle) => {
+      const collider = this.world.getCollider(handle);
+      if (collider) {
         const position = collider.translation();
         const rotation = collider.rotation();
-        this.debugMeshes[i].position.set(position.x, position.y, position.z);
-        this.debugMeshes[i].quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+        mesh.position.set(position.x, position.y, position.z);
+        mesh.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
       }
-    }
+    });
   }
 }
