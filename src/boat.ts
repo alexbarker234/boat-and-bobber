@@ -111,8 +111,26 @@ export class Boat {
     // Log vels
     const linvel = this.rigidBody.linvel();
     const angvel = this.rigidBody.angvel();
-    console.log("linvel", linvel);
-    console.log("angvel", angvel);
+    console.log(
+      "linvel",
+      linvel,
+      "x:",
+      Math.abs(linvel.x) < 0.001 ? "under 0.001" : "normal",
+      "y:",
+      Math.abs(linvel.y) < 0.001 ? "under 0.001" : "normal",
+      "z:",
+      Math.abs(linvel.z) < 0.001 ? "under 0.001" : "normal"
+    );
+    console.log(
+      "angvel",
+      angvel,
+      "x:",
+      Math.abs(angvel.x) < 0.001 ? "under 0.001" : "normal",
+      "y:",
+      Math.abs(angvel.y) < 0.001 ? "under 0.001" : "normal",
+      "z:",
+      Math.abs(angvel.z) < 0.001 ? "under 0.001" : "normal"
+    );
   }
 
   private updateAngularVelocity() {
@@ -169,8 +187,8 @@ export class Boat {
     // Manually dampen velocity
     this.rigidBody.setLinvel({ x: velocity.x * 0.992, y: 0, z: velocity.z * 0.992 }, true);
     const linvel = this.rigidBody.linvel();
-    if (Math.abs(linvel.x) < 0.0001) this.rigidBody.setLinvel({ x: 0, y: 0, z: linvel.z }, true);
-    if (Math.abs(linvel.z) < 0.0001) this.rigidBody.setLinvel({ x: linvel.x, y: 0, z: 0 }, true);
+    if (Math.abs(linvel.x) < 0.001) this.rigidBody.setLinvel({ x: 0, y: 0, z: this.rigidBody.linvel().z }, true);
+    if (Math.abs(linvel.z) < 0.001) this.rigidBody.setLinvel({ x: this.rigidBody.linvel().x, y: 0, z: 0 }, true);
   }
 
   private updateMeshFromPhysics() {
