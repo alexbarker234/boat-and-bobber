@@ -10,15 +10,20 @@ export class FishingRod {
   private maxLineLength = 5;
   private castSpeed = 0.1;
 
+  private rodLength = 0.8;
+
   constructor() {
     this.createRod();
   }
 
   private createRod() {
     // Create a simple rod (cylinder)
-    const rodGeometry = new CylinderGeometry(0.02, 0.02, 1.5);
+    const rodGeometry = new CylinderGeometry(0.02, 0.02, this.rodLength);
     const rodMaterial = new MeshStandardMaterial({ color: 0x8b4513 });
     this.rodMesh = new Mesh(rodGeometry, rodMaterial);
+
+    // Move the rod so its origin is at one end (bottom)
+    this.rodMesh.geometry.translate(0, this.rodLength / 2, 0);
   }
 
   public startCasting(startPosition: Vector3, direction: Vector3) {
@@ -47,16 +52,16 @@ export class FishingRod {
 
     this.lineLength += this.castSpeed;
 
-    // Update hook position
-    this.hookPosition.copy(boatPosition).add(boatDirection.clone().multiplyScalar(this.lineLength));
-    this.hookPosition.y = -0.5; // Below water surface
+    // Update hook position - cast to the left of the boat
+    const leftDirection = new Vector3(-boatDirection.z, 0, -boatDirection.x).normalize();
+    this.hookPosition.copy(boatPosition).add(leftDirection.clone().multiplyScalar(this.lineLength));
+    this.hookPosition.y = -0.5;
 
-    // Update line geometry
     if (this.lineMesh) {
-      const points = [
-        boatPosition.clone().add(new Vector3(0, 0.5, 0)), // Rod tip
-        this.hookPosition.clone()
-      ];
+      const rodTipOffset = new Vector3(0, this.rodLength, 0);
+      const rodTipPosition = this.rodMesh.position.clone().add(rodTipOffset.applyQuaternion(this.rodMesh.quaternion));
+
+      const points = [rodTipPosition, this.hookPosition.clone()];
       this.lineMesh.geometry.setFromPoints(points);
     }
 

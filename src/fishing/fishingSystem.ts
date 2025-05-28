@@ -65,6 +65,15 @@ export class FishingSystem {
   public update(boatPosition: Vector3, boatQuaternion: Quaternion) {
     // Update rod position
     this.rod.updatePosition(boatPosition, boatQuaternion);
+    // Position rod on the left side of the boat and angle it 45 degrees upwards
+    const rodOffset = new Vector3(0, 0.25, 0.25);
+    rodOffset.applyQuaternion(boatQuaternion);
+    this.rod.getRodMesh().position.copy(boatPosition).add(rodOffset);
+    this.rod.getRodMesh().quaternion.copy(boatQuaternion);
+
+    // Apply 45-degree upward rotation
+    const upwardRotation = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), Math.PI / 4);
+    this.rod.getRodMesh().quaternion.multiply(upwardRotation);
 
     switch (this.state) {
       case "casting":
