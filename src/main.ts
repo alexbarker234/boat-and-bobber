@@ -72,7 +72,7 @@ async function init() {
   const water = new Water();
   scene.add(water);
 
-  boat = new Boat();
+  boat = new Boat(scene);
   const boatMesh = boat.getMesh();
   if (boatMesh) {
     scene.add(boatMesh);

@@ -2,6 +2,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import * as THREE from "three";
 import { Mesh, MeshStandardMaterial, Vector3 } from "three";
 import { AssetLoader } from "./assetLoader";
+import { FishingSystem } from "./fishing/fishingSystem";
 import { PhysicsManager } from "./physics/physicsManager";
 
 export class Boat {
@@ -9,6 +10,7 @@ export class Boat {
   private readonly acceleration = 0.002;
   private readonly rotationSpeed = 0.01;
   private currentTilt = 0;
+  private fishingSystem!: FishingSystem;
 
   private keys = {
     forward: false,
@@ -21,10 +23,11 @@ export class Boat {
   private rigidBody!: RAPIER.RigidBody;
   private collider!: RAPIER.Collider;
 
-  constructor() {
+  constructor(scene: THREE.Scene) {
     this.setupKeyboardControls();
     this.createMesh();
     this.setupPhysics();
+    this.fishingSystem = new FishingSystem(scene);
   }
 
   private createMesh() {
@@ -104,33 +107,20 @@ export class Boat {
   public update() {
     if (!this.mesh || !this.rigidBody) return;
 
-    this.updateAngularVelocity();
-    this.updateLinearVelocity();
-    this.updateMeshFromPhysics();
+    // Update fishing system first
+    this.fishingSystem.update(this.mesh.position, this.mesh.quaternion);
 
-    // Log vels
-    const linvel = this.rigidBody.linvel();
-    const angvel = this.rigidBody.angvel();
-    console.log(
-      "linvel",
-      linvel,
-      "x:",
-      Math.abs(linvel.x) < 0.001 ? "under 0.001" : "normal",
-      "y:",
-      Math.abs(linvel.y) < 0.001 ? "under 0.001" : "normal",
-      "z:",
-      Math.abs(linvel.z) < 0.001 ? "under 0.001" : "normal"
-    );
-    console.log(
-      "angvel",
-      angvel,
-      "x:",
-      Math.abs(angvel.x) < 0.001 ? "under 0.001" : "normal",
-      "y:",
-      Math.abs(angvel.y) < 0.001 ? "under 0.001" : "normal",
-      "z:",
-      Math.abs(angvel.z) < 0.001 ? "under 0.001" : "normal"
-    );
+    // Only allow movement if not fishing
+    if (!this.fishingSystem.isFishing()) {
+      this.updateAngularVelocity();
+      this.updateLinearVelocity();
+    } else {
+      // Stop the boat when fishing
+      this.rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
+      this.rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    }
+
+    this.updateMeshFromPhysics();
   }
 
   private updateAngularVelocity() {
