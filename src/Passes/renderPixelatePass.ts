@@ -58,6 +58,11 @@ export default class RenderPixelatedPass extends Pass {
                 resolution: {
                     value: new THREE.Vector4(this.resolution.x, this.resolution.y, 1 / this.resolution.x, 1 / this.resolution.y),
                 },
+                fogNear: { value: 1.0 },
+                fogFar: { value: 30.0 },
+                fogColor: { value: new THREE.Color(0xb0eaf2) },
+                cameraNear: { value: 0.1 },
+                cameraFar: { value: 1000.0 },
             },
             vertexShader: `
                 varying vec2 vUv;
@@ -71,6 +76,11 @@ export default class RenderPixelatedPass extends Pass {
                 uniform sampler2D tDepth;
                 uniform sampler2D tNormal;
                 uniform vec4 resolution;
+                uniform float fogNear;
+                uniform float fogFar;
+                uniform vec3 fogColor;
+                uniform float cameraNear;
+                uniform float cameraFar;
                 varying vec2 vUv;
 
                 float getDepth(int x, int y) {
@@ -79,6 +89,11 @@ export default class RenderPixelatedPass extends Pass {
 
                 vec3 getNormal(int x, int y) {
                     return texture2D( tNormal, vUv + vec2(x, y) * resolution.zw ).rgb * 2.0 - 1.0;
+                }
+
+                float linearizeDepth(float depth) {
+                    float z = depth * 2.0 - 1.0; // Convert to NDC
+                    return (2.0 * cameraNear * cameraFar) / (cameraFar + cameraNear - z * (cameraFar - cameraNear));
                 }
 
                 float neighborNormalEdgeIndicator(int x, int y, float depth, vec3 normal) {
@@ -143,7 +158,14 @@ export default class RenderPixelatedPass extends Pass {
 
                     float coefficient = dei > 0.0 ? (1.0 - depthEdgeCoefficient * dei) : (1.0 + normalEdgeCoefficient * nei);
 
-                    gl_FragColor = texel * coefficient;
+                    vec4 finalColor = texel * coefficient;
+                    
+                    // Apply fog
+                    float depth = linearizeDepth(getDepth(0, 0));
+                    float fogFactor = smoothstep(fogNear, fogFar, depth);
+                    finalColor.rgb = mix(finalColor.rgb, fogColor, fogFactor);
+
+                    gl_FragColor = finalColor;
                 }
                 `,
         });
