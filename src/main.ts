@@ -1,16 +1,18 @@
-import { AmbientLight, BoxGeometry, Color, DirectionalLight, DoubleSide, Mesh, MeshStandardMaterial, PerspectiveCamera, PlaneGeometry, Scene, Vector2, WebGLRenderer } from "three";
-import { UnrealBloomPass } from "three/examples/jsm/Addons.js";
+import { AmbientLight, BoxGeometry, Color, DirectionalLight, DoubleSide, Fog, Mesh, MeshStandardMaterial, PerspectiveCamera, Scene, TextureLoader, Vector2, WebGLRenderer } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import PixelatePass from "./Passes/pixelatePass";
 import RenderPixelatedPass from "./Passes/renderPixelatePass";
+import { Water } from "./water";
 
 let screenResolution = new Vector2(window.innerWidth, window.innerHeight);
 let renderResolution = screenResolution.clone().divideScalar(6);
 
-function init() {
+async function init() {
     const scene = new Scene();
+    scene.background = new Color(0xb0eaf2);
+    scene.fog = new Fog(0xb0eaf2, 1, 30);
     const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
     // Create the cube
@@ -41,23 +43,18 @@ function init() {
         const directionalLight = new DirectionalLight(0x00fffc, 0.9);
         directionalLight.position.set(1, 0.25, 0);
         scene.add(directionalLight);
-        // let spotLight = new SpotLight(0xff8800, 1, 10, Math.PI / 16, 0.02, 2);
-        // // let spotLight = new THREE.SpotLight( 0xff8800, 1, 10, Math.PI / 16, 0, 2 )
-        // spotLight.position.set(2, 2, 0);
-        // let target = spotLight.target;
-        // scene.add(target);
-        // target.position.set(0, 0, 0);
-        // spotLight.castShadow = true;
-        // scene.add(spotLight);
-        // spotLight.shadow.radius = 0
     }
 
     // Create the water plane
-    const planeGeometry = new PlaneGeometry(10, 10);
-    const planeMaterial = new MeshStandardMaterial({ color: new Color(0x87ceeb), side: DoubleSide });
-    const waterPlane = new Mesh(planeGeometry, planeMaterial);
-    waterPlane.rotation.x = -Math.PI / 2; // Rotate to be horizontal
-    scene.add(waterPlane);
+    // const planeGeometry = new PlaneGeometry(10, 10);
+    // const planeMaterial = new MeshStandardMaterial({ color: new Color(0x87ceeb), side: DoubleSide });
+    // const waterPlane = new Mesh(planeGeometry, planeMaterial);
+    // waterPlane.rotation.x = -Math.PI / 2; // Rotate to be horizontal
+    // scene.add(waterPlane);
+    const textureLoader = new TextureLoader();
+    const heightMap = textureLoader.loadAsync("./assets/heightMap.png");
+    const water = new Water(await heightMap);
+    scene.add(water);
 
     // Load and add Benchy
     const loader = new STLLoader();
@@ -81,18 +78,32 @@ function init() {
     const composer = new EffectComposer(renderer);
     // composer.addPass( new RenderPass( scene, camera ) )
     composer.addPass(new RenderPixelatedPass(renderResolution, scene, camera));
-    let bloomPass = new UnrealBloomPass(screenResolution, 0.4, 0.1, 0.9);
-    composer.addPass(bloomPass);
+    // let bloomPass = new UnrealBloomPass(screenResolution, 0.4, 0.1, 0.9);
+    // composer.addPass(bloomPass);
     composer.addPass(new PixelatePass(new Vector2(512, 512)));
 
     // const pixelatePass = new PixelatePass(new Vector2(256, 256));
     // composer.addPass(pixelatePass);
 
     // Controls
-
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 0, 0);
     controls.update();
+
+    // Handle window resize
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        composer.setSize(window.innerWidth, window.innerHeight);
+
+        // Update screen resolution
+        screenResolution.set(window.innerWidth, window.innerHeight);
+        renderResolution = screenResolution.clone().divideScalar(6);
+    }
+
+    window.addEventListener("resize", onWindowResize);
 
     // Animation loop
     function animate() {
