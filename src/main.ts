@@ -6,6 +6,7 @@ import { CameraController } from "./cameraController";
 import { DebugCube } from "./debugCube";
 import { Rock } from "./objects/rock";
 import RenderPixelatedPass from "./Passes/renderPixelatePass";
+import { PhysicsManager } from "./physics/physicsManager";
 import { settings } from "./settings";
 import { Water } from "./water";
 
@@ -21,6 +22,10 @@ async function init() {
   await AssetLoader.getInstance().loadAssets();
 
   const scene = new Scene();
+
+  // Initialize physics before creating objects
+  await PhysicsManager.initialize(scene);
+
   scene.background = settings.fogColor;
   scene.fog = new Fog(settings.fogColor, settings.fogNear, settings.fogFar);
 
@@ -97,6 +102,9 @@ async function init() {
   // Update the animation loop
   function animate() {
     requestAnimationFrame(animate);
+
+    // Update physics world
+    PhysicsManager.getInstance().update();
 
     // Update debug cube
     debugCube.update();
