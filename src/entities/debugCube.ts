@@ -1,5 +1,5 @@
 import { BoxGeometry, DoubleSide, Mesh, MeshStandardMaterial } from "three";
-import { Entity } from "./entities/entity";
+import { Entity } from "./entity";
 
 export class DebugCube extends Entity {
   private cube: Mesh;

@@ -1,8 +1,8 @@
 import RAPIER from "@dimforge/rapier3d-compat";
 import { Euler, MathUtils, Mesh, MeshStandardMaterial, Quaternion, Scene, Vector3 } from "three";
-import { AssetLoader } from "../assetLoader";
 import { FishingSystem } from "../fishing/fishingSystem";
-import { PhysicsManager } from "../physics/physicsManager";
+import { AssetLoader } from "../systems/assetLoader";
+import { PhysicsManager } from "../systems/physicsManager";
 import { Entity } from "./entity";
 
 export class Boat extends Entity {

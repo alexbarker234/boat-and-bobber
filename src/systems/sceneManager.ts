@@ -1,10 +1,10 @@
 import { AmbientLight, DirectionalLight, Fog, Scene, Vector3 } from "three";
-import { DebugCube } from "./debugCube";
-import { Boat } from "./entities/boat";
-import { Entity } from "./entities/entity";
-import { Rock } from "./entities/rock";
-import { settings } from "./settings";
-import { Water } from "./water";
+import { Boat } from "../entities/boat";
+import { DebugCube } from "../entities/debugCube";
+import { Entity } from "../entities/entity";
+import { Rock } from "../entities/rock";
+import { settings } from "../settings";
+import { Water } from "../water";
 
 export class SceneManager {
   public static instance: SceneManager;

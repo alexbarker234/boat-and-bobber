@@ -1,11 +1,11 @@
 import { Scene, WebGLRenderer } from "three";
 import { RenderPixelatedPass } from "three/addons/postprocessing/RenderPixelatedPass.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
-import { AssetLoader } from "./assetLoader";
-import { CameraController } from "./cameraController";
-import { PhysicsManager } from "./physics/physicsManager";
-import { SceneManager } from "./sceneManager";
 import "./styles/global.css";
+import { AssetLoader } from "./systems/assetLoader";
+import { CameraController } from "./systems/cameraController";
+import { PhysicsManager } from "./systems/physicsManager";
+import { SceneManager } from "./systems/sceneManager";
 import "./utils/mathExtensions";
 
 let cameraController: CameraController;
