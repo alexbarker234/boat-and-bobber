@@ -10,6 +10,7 @@ export class CameraController {
   private readonly lerpFactor: number;
   private target: Vector3;
   private isDragging = false;
+  private underwaterOverlay!: HTMLElement;
 
   constructor(renderer: WebGLRenderer) {
     this.camera = new PerspectiveCamera(
@@ -28,6 +29,8 @@ export class CameraController {
 
     this.controls = new OrbitControls(this.camera, renderer.domElement);
     this.setupOrbitControls();
+
+    this.createUnderwaterOverlay();
   }
 
   private setupOrbitControls() {
@@ -38,8 +41,8 @@ export class CameraController {
     this.controls.enablePan = false; // Disable panning
 
     // Limit vertical rotation
-    this.controls.minPolarAngle = Math.PI / 6; // 30 degrees from top
-    this.controls.maxPolarAngle = (2 * Math.PI) / 3; // 120 degrees from top
+    this.controls.minPolarAngle = Math.degreesToRadians(30);
+    this.controls.maxPolarAngle = Math.degreesToRadians(80); // no underwater
 
     // Set distance limits (effectively disabling zoom)
     this.controls.minDistance = 5;
@@ -77,6 +80,23 @@ export class CameraController {
     );
   }
 
+  private createUnderwaterOverlay() {
+    this.underwaterOverlay = document.createElement("div");
+    this.underwaterOverlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 100, 200, 0.9);
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    `;
+    document.body.appendChild(this.underwaterOverlay);
+  }
+
   public getCamera(): PerspectiveCamera {
     return this.camera;
   }
@@ -110,11 +130,18 @@ export class CameraController {
       this.camera.position.lerp(idealPosition, this.lerpFactor);
     }
 
+    // Check if camera is underwater (assuming water level is at y = 0)
+    const isUnderwater = this.camera.position.y < 0;
+    this.underwaterOverlay.style.opacity = isUnderwater ? "1" : "0";
+
     // Always update controls
     this.controls.update();
   }
 
   public dispose() {
     this.controls.dispose();
+    if (this.underwaterOverlay && this.underwaterOverlay.parentNode) {
+      this.underwaterOverlay.parentNode.removeChild(this.underwaterOverlay);
+    }
   }
 }
