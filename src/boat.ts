@@ -1,11 +1,11 @@
 import RAPIER from "@dimforge/rapier3d-compat";
-import * as THREE from "three";
-import { Mesh, MeshStandardMaterial, Vector3 } from "three";
+import { Euler, MathUtils, Mesh, MeshStandardMaterial, Quaternion, Scene, Vector3 } from "three";
 import { AssetLoader } from "./assetLoader";
 import { FishingSystem } from "./fishing/fishingSystem";
+import { Entity } from "./objects/entity";
 import { PhysicsManager } from "./physics/physicsManager";
 
-export class Boat {
+export class Boat extends Entity {
   private mesh!: Mesh;
   private readonly acceleration = 0.002;
   private readonly rotationSpeed = 0.01;
@@ -34,7 +34,8 @@ export class Boat {
   private rigidBody!: RAPIER.RigidBody;
   private collider!: RAPIER.Collider;
 
-  constructor(scene: THREE.Scene) {
+  constructor(scene: Scene) {
+    super();
     this.setupKeyboardControls();
     this.createMesh();
     this.setupPhysics();
@@ -114,7 +115,7 @@ export class Boat {
     PhysicsManager.getInstance().createDebugMesh(this.collider);
   }
 
-  public getMesh(): Mesh | null {
+  public getMesh(): Mesh {
     return this.mesh;
   }
 
@@ -163,7 +164,7 @@ export class Boat {
     // Update velocity based on input
     const physicsRotation = this.rigidBody.rotation();
     const forward = new Vector3(1, 0, 0).applyQuaternion(
-      new THREE.Quaternion(physicsRotation.x, physicsRotation.y, physicsRotation.z, physicsRotation.w)
+      new Quaternion(physicsRotation.x, physicsRotation.y, physicsRotation.z, physicsRotation.w)
     );
     if (!this.fishingSystem.isFishing()) {
       if (this.keys.forward || this.keys.backward) {
@@ -197,14 +198,14 @@ export class Boat {
 
     // Apply both physics rotation and the visual offset with smooth tilt
     const rotation = this.rigidBody.rotation();
-    const physicsQuaternion = new THREE.Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
-    const offsetQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
+    const physicsQuaternion = new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
+    const offsetQuaternion = new Quaternion().setFromEuler(new Euler(-Math.PI / 2, 0, 0));
 
     // Add smooth tilt based on angular velocity
     const angularVel = this.rigidBody.angvel();
     const targetTilt = -angularVel.y * 0.5;
-    this.currentTilt = THREE.MathUtils.lerp(this.currentTilt, targetTilt, 0.15);
-    const angularTilt = new THREE.Quaternion().setFromEuler(new THREE.Euler(this.currentTilt, 0, 0));
+    this.currentTilt = MathUtils.lerp(this.currentTilt, targetTilt, 0.15);
+    const angularTilt = new Quaternion().setFromEuler(new Euler(this.currentTilt, 0, 0));
 
     // Combine all rotations
     this.mesh.quaternion.multiplyQuaternions(physicsQuaternion, offsetQuaternion);
@@ -227,7 +228,7 @@ export class Boat {
 
     // Reset physics body position and rotation
     this.rigidBody.setTranslation(this.initialPosition, true);
-    this.rigidBody.setRotation({ x: 0, y: 0, z: 0, w: 1 }, true);
+    this.rigidBody.setRotation(this.initialRotation, true);
 
     // Reset velocities
     this.rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
@@ -238,7 +239,7 @@ export class Boat {
 
     // Update mesh position and rotation
     this.mesh.position.set(this.initialPosition.x, this.initialPosition.y, this.initialPosition.z);
-    const offsetQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
+    const offsetQuaternion = new Quaternion().setFromEuler(new Euler(-Math.PI / 2, 0, 0));
     this.mesh.quaternion.copy(offsetQuaternion);
   }
 }

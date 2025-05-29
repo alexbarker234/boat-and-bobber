@@ -14,6 +14,10 @@
     margin-bottom: clamp(8px, 1vw, 10px);
 }
 
+.fishing-status-text:empty {
+    display: none;
+}
+
 .fishing-rhythm-container {
     position: fixed;
     top: 50%;

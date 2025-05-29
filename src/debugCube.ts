@@ -1,9 +1,11 @@
 import { BoxGeometry, DoubleSide, Mesh, MeshStandardMaterial } from "three";
+import { Entity } from "./objects/entity";
 
-export class DebugCube {
+export class DebugCube extends Entity {
   private cube: Mesh;
 
   constructor() {
+    super();
     const geometry = new BoxGeometry(0.5, 0.5, 0.5);
     const materials = [
       new MeshStandardMaterial({ color: 0xff0000, side: DoubleSide }), // right - red

@@ -2,6 +2,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { Mesh, MeshStandardMaterial, Vector3 } from "three";
 import { AssetLoader } from "../assetLoader";
 import { PhysicsManager } from "../physics/physicsManager";
+import { Entity } from "./entity";
 
 const ROCK_VARIANTS = {
   large: {
@@ -16,13 +17,14 @@ const ROCK_VARIANTS = {
   }
 } as const;
 
-export class Rock {
+export class Rock extends Entity {
   private mesh: Mesh | null = null;
   // shut up, yes its intiialised in the constructor
   private rigidBody!: RAPIER.RigidBody;
   private collider!: RAPIER.Collider;
 
   constructor(size: "large" | "medium" = "large", position: Vector3 = new Vector3(0, 0, 0)) {
+    super();
     this.createMesh(size, position);
     this.setupPhysics(size, position);
   }
