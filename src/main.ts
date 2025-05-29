@@ -1,21 +1,68 @@
-import { AmbientLight, DirectionalLight, Fog, Scene, Vector2, Vector3, WebGLRenderer } from "three";
+import { AmbientLight, DirectionalLight, Fog, Scene, Vector3, WebGLRenderer } from "three";
+import { RenderPixelatedPass } from "three/addons/postprocessing/RenderPixelatedPass.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { AssetLoader } from "./assetLoader";
 import { Boat } from "./boat";
 import { CameraController } from "./cameraController";
 import { DebugCube } from "./debugCube";
 import { Rock } from "./objects/rock";
-import RenderPixelatedPass from "./Passes/renderPixelatePass";
 import { PhysicsManager } from "./physics/physicsManager";
 import { settings } from "./settings";
 import { Water } from "./water";
 
-let screenResolution = new Vector2(window.innerWidth, window.innerHeight);
-let renderResolution = screenResolution.clone().divideScalar(3);
-
 let boat: Boat;
 let cameraController: CameraController;
 let debugCube: DebugCube;
+
+// does this even make sense to do
+function getPixelSize() {
+  const baseWidth = 1024;
+  const basePixelSize = 6;
+  const currentWidth = window.innerWidth;
+
+  // Scale pixel size based on screen width
+  const scale = currentWidth / baseWidth;
+  return Math.max(1, Math.round(basePixelSize * scale));
+}
+
+function spawnRocks(scene: Scene) {
+  const rockCount = 10;
+  const rocks: Rock[] = [];
+  const minDistanceFromOrigin = 2.0;
+  const minDistanceBetweenRocks = 3.0;
+  const placedPositions: Vector3[] = [];
+
+  for (let i = 0; i < rockCount; i++) {
+    const size = Math.random() < 0.5 ? "large" : "medium";
+    let position: Vector3;
+    let attempts = 0;
+    const maxAttempts = 100;
+
+    do {
+      const x = (Math.random() - 0.5) * 20;
+      const z = (Math.random() - 0.5) * 20;
+      position = new Vector3(x, 0, z);
+      attempts++;
+    } while (
+      attempts < maxAttempts &&
+      (position.length() < minDistanceFromOrigin ||
+        placedPositions.some((placed) => position.distanceTo(placed) < minDistanceBetweenRocks))
+    );
+
+    // emergency exit!
+    if (attempts >= maxAttempts) {
+      continue;
+    }
+
+    placedPositions.push(position.clone());
+    const rock = new Rock(size, position);
+    const rockMesh = rock.getMesh();
+    if (rockMesh) {
+      scene.add(rockMesh);
+      rocks.push(rock);
+    }
+  }
+}
 
 async function init() {
   // Load all assets first
@@ -53,21 +100,7 @@ async function init() {
     scene.add(sun);
   }
 
-  // Create rocks
-  const rockCount = 10;
-  const rocks: Rock[] = [];
-  for (let i = 0; i < rockCount; i++) {
-    const size = Math.random() < 0.5 ? "large" : "medium";
-    const x = (Math.random() - 0.5) * 20;
-    const z = (Math.random() - 0.5) * 20;
-    const position = new Vector3(x, 0, z);
-    const rock = new Rock(size, position);
-    const rockMesh = rock.getMesh();
-    if (rockMesh) {
-      scene.add(rockMesh);
-      rocks.push(rock);
-    }
-  }
+  spawnRocks(scene);
 
   const water = new Water();
   scene.add(water);
@@ -84,7 +117,8 @@ async function init() {
 
   // Setup post-processing
   const composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPixelatedPass(renderResolution, scene, camera));
+  const pixelPass = new RenderPixelatedPass(getPixelSize(), scene, camera);
+  composer.addPass(pixelPass);
 
   // Handle window resize
   function onWindowResize() {
@@ -92,9 +126,7 @@ async function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     composer.setSize(window.innerWidth, window.innerHeight);
 
-    // Update screen resolution
-    screenResolution.set(window.innerWidth, window.innerHeight);
-    renderResolution = screenResolution.clone().divideScalar(3);
+    pixelPass.setPixelSize(getPixelSize());
   }
 
   window.addEventListener("resize", onWindowResize);

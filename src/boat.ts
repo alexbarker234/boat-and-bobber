@@ -12,6 +12,10 @@ export class Boat {
   private currentTilt = 0;
   private fishingSystem!: FishingSystem;
 
+  // Store initial transform values
+  private readonly initialPosition = { x: 0, y: 0.01, z: 0 };
+  private readonly initialRotation = { x: 0, y: 0, z: 0, w: 1 };
+
   private keys = {
     forward: false,
     backward: false,
@@ -58,6 +62,9 @@ export class Boat {
           break;
         case "d":
           this.keys.right = true;
+          break;
+        case "r":
+          this.resetBoat();
           break;
       }
     });
@@ -208,5 +215,25 @@ export class Boat {
 
   public getQuaternion() {
     return this.mesh ? this.mesh.quaternion : null;
+  }
+
+  private resetBoat() {
+    if (!this.rigidBody || !this.mesh) return;
+
+    // Reset physics body position and rotation
+    this.rigidBody.setTranslation(this.initialPosition, true);
+    this.rigidBody.setRotation({ x: 0, y: 0, z: 0, w: 1 }, true);
+
+    // Reset velocities
+    this.rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    this.rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
+
+    // Reset visual tilt
+    this.currentTilt = 0;
+
+    // Update mesh position and rotation
+    this.mesh.position.set(this.initialPosition.x, this.initialPosition.y, this.initialPosition.z);
+    const offsetQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
+    this.mesh.quaternion.copy(offsetQuaternion);
   }
 }

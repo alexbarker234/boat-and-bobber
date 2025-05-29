@@ -17,7 +17,7 @@ export class Water extends THREE.Mesh {
       WATER_COL: { value: new THREE.Vector4(0.04, 0.38, 0.88, 1.0) },
       WATER2_COL: { value: new THREE.Vector4(0.04, 0.35, 0.78, 1.0) },
       FOAM_COL: { value: new THREE.Vector4(0.8125, 0.9609, 0.9648, 1.0) },
-      distortion_speed: { value: 2.0 },
+      distortion_speed: { value: 0.5 },
       tile: { value: new THREE.Vector2(50.0, 50.0) },
       height: { value: 2.0 },
       wave_size: { value: new THREE.Vector2(2.0, 2.0) },
