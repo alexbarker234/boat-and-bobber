@@ -89,6 +89,15 @@ export class RhythmGame {
     this.lastNoteTime = noteTime;
   }
 
+  private isNoteHit(note: RhythmNote) {
+    const currentTime = (Date.now() - this.startTime) / 1000;
+
+    const noteStart = note.time;
+    const noteEnd = note.time + note.duration;
+
+    return currentTime >= noteStart && currentTime <= noteEnd;
+  }
+
   private setupKeyListeners() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!this.isActive) return;
@@ -123,18 +132,11 @@ export class RhythmGame {
   private keyUpHandler?: (e: KeyboardEvent) => void;
 
   private checkTapHit() {
-    const currentTime = (Date.now() - this.startTime) / 1000;
-
     for (const note of this.notes) {
-      if (note.type === "tap" && !note.hit) {
-        const noteStart = note.time;
-        const noteEnd = note.time + note.duration;
-
-        if (currentTime >= noteStart && currentTime <= noteEnd) {
-          note.hit = true;
-          this.progress += 15; // Big boost for tap notes
-          break;
-        }
+      if (note.type === "tap" && !note.hit && this.isNoteHit(note)) {
+        note.hit = true;
+        this.progress += 30;
+        break;
       }
     }
   }
@@ -192,14 +194,10 @@ export class RhythmGame {
     // Check if holding during a valid hold note
     if (this.isHolding) {
       for (const note of this.notes) {
-        if (note.type === "hold" && !note.hit) {
-          const noteStart = note.time;
-          const noteEnd = note.time + note.duration;
-          if (currentTime >= noteStart && currentTime <= noteEnd) {
-            progressChange += 15;
-            inValidZone = true;
-            break;
-          }
+        if (note.type === "hold" && this.isNoteHit(note)) {
+          progressChange += 15;
+          inValidZone = true;
+          break;
         }
       }
 
