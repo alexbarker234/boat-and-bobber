@@ -2,7 +2,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { Mesh, MeshStandardMaterial, Vector3 } from "three";
 import { AssetLoader } from "../systems/assetLoader";
 import { PhysicsManager } from "../systems/physicsManager";
-import { Entity } from "./entity";
+import { PhysicsEntity } from "./physicsEntity";
 
 const ROCK_VARIANTS = {
   large: {
@@ -17,11 +17,11 @@ const ROCK_VARIANTS = {
   }
 } as const;
 
-export class Rock extends Entity {
+export class Rock extends PhysicsEntity {
   private mesh: Mesh | null = null;
   // shut up, yes its intiialised in the constructor
-  private rigidBody!: RAPIER.RigidBody;
-  private collider!: RAPIER.Collider;
+  public rigidBody!: RAPIER.RigidBody;
+  public collider!: RAPIER.Collider;
 
   constructor(size: "large" | "medium" = "large", position: Vector3 = new Vector3(0, 0, 0)) {
     super();

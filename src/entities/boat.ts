@@ -1,11 +1,11 @@
-import RAPIER from "@dimforge/rapier3d-compat";
+import { Collider, ColliderDesc, RigidBody, RigidBodyDesc } from "@dimforge/rapier3d-compat";
 import { Euler, MathUtils, Mesh, MeshStandardMaterial, Quaternion, Scene, Vector3 } from "three";
 import { FishingSystem } from "../fishing/fishingSystem";
 import { AssetLoader } from "../systems/assetLoader";
 import { PhysicsManager } from "../systems/physicsManager";
-import { Entity } from "./entity";
+import { PhysicsEntity } from "./physicsEntity";
 
-export class Boat extends Entity {
+export class Boat extends PhysicsEntity {
   private mesh!: Mesh;
   private readonly acceleration = 0.002;
   private readonly rotationSpeed = 0.01;
@@ -31,8 +31,8 @@ export class Boat extends Entity {
   }
 
   // shut up, yes its intiialised in the constructor
-  private rigidBody!: RAPIER.RigidBody;
-  private collider!: RAPIER.Collider;
+  public rigidBody!: RigidBody;
+  public collider!: Collider;
 
   constructor(scene: Scene) {
     super();
@@ -99,7 +99,7 @@ export class Boat extends Entity {
     const world = PhysicsManager.getInstance().getWorld();
 
     // Create rigid body for the boat
-    const rigidBodyDesc = RAPIER.RigidBodyDesc.dynamic()
+    const rigidBodyDesc = RigidBodyDesc.dynamic()
       .setTranslation(0, 0.01, 0)
       .setGravityScale(0)
       .setLinearDamping(0)
@@ -108,7 +108,7 @@ export class Boat extends Entity {
     this.rigidBody = world.createRigidBody(rigidBodyDesc);
 
     // Create collider for the boat (simplified box shape)
-    const colliderDesc = RAPIER.ColliderDesc.cuboid(0.5, 0.2, 0.25);
+    const colliderDesc = ColliderDesc.cuboid(0.5, 0.2, 0.25);
     this.collider = world.createCollider(colliderDesc, this.rigidBody);
 
     // Create debug visualization
