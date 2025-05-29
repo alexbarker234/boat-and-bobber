@@ -253,6 +253,10 @@ export class Boat extends PhysicsEntity {
     return this.mesh ? this.mesh.quaternion : null;
   }
 
+  public isFishing() {
+    return this.fishingSystem.isFishing();
+  }
+
   private resetBoat() {
     if (!this.rigidBody || !this.mesh) return;
 

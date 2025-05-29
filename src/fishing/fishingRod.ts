@@ -47,6 +47,16 @@ export class FishingRod {
     this.lineMesh = new Line(geometry, material);
   }
 
+  public updateLine() {
+    if (this.lineMesh) {
+      const rodTipOffset = new Vector3(0, this.rodLength, 0);
+      const rodTipPosition = this.rodMesh.position.clone().add(rodTipOffset.applyQuaternion(this.rodMesh.quaternion));
+
+      const points = [rodTipPosition, this.hookPosition.clone()];
+      this.lineMesh.geometry.setFromPoints(points);
+    }
+  }
+
   public updateCasting(): boolean {
     if (!this.isLineOut || this.lineLength >= this.maxLineLength) {
       return this.lineLength >= this.maxLineLength;
@@ -58,14 +68,6 @@ export class FishingRod {
     const leftDirection = new Vector3(0, 1, 0).applyQuaternion(this.boatParent.quaternion);
     this.hookPosition.copy(this.boatParent.position).add(leftDirection.clone().multiplyScalar(this.lineLength));
     this.hookPosition.y = -0.5;
-
-    if (this.lineMesh) {
-      const rodTipOffset = new Vector3(0, this.rodLength, 0);
-      const rodTipPosition = this.rodMesh.position.clone().add(rodTipOffset.applyQuaternion(this.rodMesh.quaternion));
-
-      const points = [rodTipPosition, this.hookPosition.clone()];
-      this.lineMesh.geometry.setFromPoints(points);
-    }
 
     return false; // Still casting
   }

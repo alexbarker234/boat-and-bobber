@@ -99,6 +99,7 @@ export class FishingSystem {
     if (lineMesh && !lineMesh.parent) {
       this.scene.add(lineMesh);
     }
+    this.rod.updateLine();
   }
 
   private updateCasting() {
@@ -195,6 +196,8 @@ export class FishingSystem {
   }
 
   private endMinigame(success: boolean) {
+    this.reelIn();
+
     if (success && this.currentFish) {
       this.ui.showResult(true, this.currentFish.type);
       console.log(`Caught a ${this.currentFish.type} fish!`);
@@ -204,7 +207,6 @@ export class FishingSystem {
     }
 
     this.currentFish = null;
-    this.reelIn();
   }
 
   private reelIn() {

@@ -21,7 +21,7 @@ export class CameraController {
     );
 
     this.offset = new Vector3(0, 2.5, 3);
-    this.lerpFactor = 0.05;
+    this.lerpFactor = 0.02;
     this.target = new Vector3(0, 0, 0);
 
     this.camera.position.set(0, 0, 0);
@@ -118,6 +118,13 @@ export class CameraController {
     // Rotate the offset by 90 degrees around Z axis to face behind the boat
     idealOffset.applyAxisAngle(new Vector3(0, 0, 1), Math.PI / 2);
     idealOffset.applyQuaternion(boatQuaternion);
+
+    // If the boat is fishing, adjust the camera to look slightly to the left
+    if (boat.isFishing()) {
+      const leftOffset = new Vector3(0, -2, 0);
+      leftOffset.applyQuaternion(boatQuaternion);
+      idealOffset.add(leftOffset);
+    }
 
     const idealPosition = boatPosition.clone().add(idealOffset);
 

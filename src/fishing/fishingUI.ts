@@ -79,9 +79,6 @@ export class FishingUI {
           "></div>
           <div class="fishing-progress-target" style="left: ${gameState.targetProgress}%;"></div>
         </div>
-        <p class="fishing-progress-text">
-          Progress: ${Math.round(progressPercentage)}% / ${gameState.targetProgress}%
-        </p>
       </div>
     `;
 
@@ -148,34 +145,14 @@ export class FishingUI {
 
     gameHTML += `</div>`;
 
-    // Instructions
-    gameHTML += `
-      <div class="fishing-bottom-instructions">
-        <p>${
-          isMobile
-            ? "Hold Fish Button during green bars • Tap on gold notes • Don't hold outside zones!"
-            : "Hold F/SPACE during green bars • Tap on gold notes • Don't hold outside zones!"
-        }</p>
-        <p class="fishing-holding-status ${gameState.isHolding ? "holding" : ""}">
-          ${gameState.isHolding ? "HOLDING" : "NOT HOLDING"}
-        </p>
-      </div>
-    `;
-
     this.rhythmContainer.innerHTML = gameHTML;
   }
 
   public showResult(success: boolean, fishType?: string) {
-    this.rhythmContainer.innerHTML = `
-      <h2 class="fishing-result-title ${success ? "success" : "failure"}">
-        ${success ? "Success!" : "Fish Escaped!"}
-      </h2>
-      ${success ? `<p class="fishing-result-text">You caught a <strong>${fishType}</strong> fish!</p>` : "<p class='fishing-result-text'>Better luck next time!</p>"}
-      <p class="fishing-result-continue">Click to continue...</p>
-    `;
+    this.showStatus(success ? "Success!" : "Fish Escaped!");
 
     setTimeout(() => {
-      this.rhythmContainer.style.display = "none";
+      this.hideStatus();
     }, 3000);
   }
 }

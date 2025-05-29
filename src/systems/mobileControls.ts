@@ -30,22 +30,13 @@ export class MobileControls {
     // Create a specific zone for the joystick
     const joystickZone = document.createElement("div");
     joystickZone.className = "joystick-zone";
-    joystickZone.style.cssText = `
-      position: fixed;
-      left: 20px;
-      bottom: 20px;
-      width: 120px;
-      height: 120px;
-      z-index: 1000;
-      pointer-events: auto;
-    `;
     document.body.appendChild(joystickZone);
 
     // Create joystick using the specific zone
     this.joystickManager = nipplejs.create({
-      zone: joystickZone, // Use the specific zone instead of document.body
+      zone: joystickZone,
       mode: "static",
-      position: { left: "50%", bottom: "50%" }, // Center within the zone
+      position: { left: "50%", bottom: "50%" },
       color: "blue",
       size: 100,
       restOpacity: 0.7
@@ -54,7 +45,6 @@ export class MobileControls {
     // Fish button
     this.fishButton = document.createElement("div");
     this.fishButton.className = "mobile-fish-button";
-    this.fishButton.innerHTML = "🎣";
     document.body.appendChild(this.fishButton);
   }
 

@@ -1,3 +1,11 @@
+:root {
+    --ui-background: rgba(0, 0, 0, 0.7);
+}
+
+* {
+    box-sizing: border-box;
+}
+
 /* Fishing UI Styles */
 .fishing-ui-container {
     position: fixed;
@@ -9,7 +17,7 @@
 }
 
 .fishing-status-text {
-    background: rgba(0, 0, 0, 0.7);
+    background: var(--ui-background);
     padding: clamp(8px, 1vw, 10px);
     margin-bottom: clamp(8px, 1vw, 10px);
 }
@@ -23,14 +31,12 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.9);
+    background: var(--ui-background);
     padding: clamp(20px, 3vw, 30px);
     display: none;
     width: min(90vw, 700px);
     max-width: 90vw;
     text-align: center;
-    border: 3px solid #4CAF50;
-    box-sizing: border-box;
 }
 
 .fishing-game-title {
@@ -179,43 +185,13 @@
     }
 }
 
-/* Mobile Controls */
-.mobile-joystick-container {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    width: 100px;
-    height: 100px;
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.4);
-    border-radius: 50%;
-    z-index: 1000;
-    touch-action: none;
-    user-select: none;
-}
-
-.mobile-joystick-knob {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 40px;
-    height: 40px;
-    background: rgba(255, 255, 255, 0.8);
-    border: 2px solid rgba(0, 0, 0, 0.3);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: none;
-    pointer-events: none;
-}
-
 .mobile-fish-button {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    width: 80px;
-    height: 80px;
-    background: rgba(76, 175, 80, 0.9);
-    border: 3px solid rgba(255, 255, 255, 0.8);
+    width: 100px;
+    height: 100px;
+    background: var(--ui-background);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -225,56 +201,46 @@
     touch-action: none;
     user-select: none;
     transition: transform 0.1s ease, background-color 0.1s ease;
+    background-image: url('../assets/FishIcon.png');
+    background-size: 50%;
+    background-repeat: no-repeat;
+    background-position: center;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
 }
 
 .mobile-fish-button.pressed {
     transform: scale(0.95);
-    background: rgba(56, 142, 60, 0.9);
+    background-color: rgba(0, 0, 0, 0.8);
 }
 
 .mobile-fish-button:active {
     transform: scale(0.9);
 }
 
-/* Hide mobile controls on desktop */
-@media (min-width: 768px) and (pointer: fine) {
 
-    .mobile-joystick-container,
-    .mobile-fish-button {
-        display: none;
-    }
+/* Joystick Customisation */
+.joystick-zone {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 100px;
+    height: 100px;
 }
 
-/* Disable zoom and pinch gestures */
-html {
-    touch-action: manipulation;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    -webkit-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
+.nipple {
+    opacity: 1 !important;
 }
 
-body {
-    touch-action: manipulation;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    overscroll-behavior: none;
+.front {
+    background: var(--ui-background) !important;
+    opacity: 1 !important;
+
 }
 
-/* Prevent double-tap zoom */
-* {
-    touch-action: manipulation;
-}
+.back {
+    background: var(--ui-background) !important;
+    opacity: 1 !important;
 
-/* Prevent zoom on input focus (mobile Safari) */
-input, textarea, select {
-    font-size: 16px;
 }

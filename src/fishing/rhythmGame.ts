@@ -67,7 +67,7 @@ export class RhythmGame {
     }
 
     // 70% chance for hold note, 30% for tap note
-    const isHoldNote = Math.random() < 0.7;
+    const isHoldNote = lastNote?.type === "tap" ? true : Math.random() < 0.7;
 
     if (isHoldNote) {
       const duration = Math.randBetween(0.3, 0.8);
