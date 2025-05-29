@@ -1,5 +1,6 @@
 import RAPIER from "@dimforge/rapier3d-compat";
 import * as THREE from "three";
+import { settings } from "../settings";
 
 export class PhysicsManager {
   private static instance: PhysicsManager;
@@ -62,8 +63,10 @@ export class PhysicsManager {
     });
 
     const mesh = new THREE.Mesh(geometry, material);
-    this.debugMeshes.set(collider.handle, mesh);
-    this.debugScene.add(mesh);
+    if (settings.debug) {
+      this.debugMeshes.set(collider.handle, mesh);
+      this.debugScene.add(mesh);
+    }
   }
 
   private updateDebugMeshes() {
