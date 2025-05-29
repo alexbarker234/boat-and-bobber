@@ -17,8 +17,6 @@ export class FishingUI {
       top: 2vh;
       left: 2vw;
       color: white;
-      font-family: Arial, sans-serif;
-      font-size: clamp(14px, 2vw, 18px);
       z-index: 1000;
       pointer-events: none;
     `;
