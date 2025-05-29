@@ -144,3 +144,103 @@
     font-size: 14px;
     color: #999;
 }
+
+/* Make fishing UI more mobile-friendly */
+@media (max-width: 768px) {
+    .fishing-rhythm-container {
+        padding: 15px;
+        width: 95vw;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .fishing-game-title {
+        font-size: 20px;
+        margin-bottom: 10px;
+    }
+
+    .fishing-instructions {
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+
+    .fishing-note-track {
+        margin: 10px auto;
+    }
+
+    .fishing-bottom-instructions {
+        font-size: 12px;
+        margin-top: 10px;
+    }
+
+    .fishing-status-text {
+        font-size: 14px;
+        padding: 8px;
+    }
+}
+
+/* Mobile Controls */
+.mobile-joystick-container {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    z-index: 1000;
+    touch-action: none;
+    user-select: none;
+}
+
+.mobile-joystick-knob {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid rgba(0, 0, 0, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: none;
+    pointer-events: none;
+}
+
+.mobile-fish-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 80px;
+    height: 80px;
+    background: rgba(76, 175, 80, 0.9);
+    border: 3px solid rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    z-index: 1000;
+    touch-action: none;
+    user-select: none;
+    transition: transform 0.1s ease, background-color 0.1s ease;
+}
+
+.mobile-fish-button.pressed {
+    transform: scale(0.95);
+    background: rgba(56, 142, 60, 0.9);
+}
+
+.mobile-fish-button:active {
+    transform: scale(0.9);
+}
+
+/* Hide mobile controls on desktop */
+@media (min-width: 768px) and (pointer: fine) {
+
+    .mobile-joystick-container,
+    .mobile-fish-button {
+        display: none;
+    }
+}

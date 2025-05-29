@@ -35,6 +35,11 @@ export class CameraController {
 
   private setupMouseControls() {
     window.addEventListener("pointerdown", (event) => {
+      // Don't start camera drag if pointer starts on mobile controls
+      if (this.isPointerOnMobileControls(event)) {
+        return;
+      }
+
       this.isDragging = true;
       this.previousMouseX = event.clientX;
       this.previousMouseY = event.clientY;
@@ -67,6 +72,18 @@ export class CameraController {
     window.addEventListener("pointerleave", () => {
       this.isDragging = false;
     });
+  }
+
+  private isPointerOnMobileControls(event: PointerEvent): boolean {
+    const target = event.target as HTMLElement;
+    if (!target) return false;
+
+    console.log(target.closest("#nipple_0_0"));
+    return (
+      target.closest(".mobile-fish-button") !== null ||
+      target.closest("#nipple_0_0") !== null || // nipplejs adds this attribute
+      target.id === "nipple_zone_joystick"
+    );
   }
 
   public getCamera(): PerspectiveCamera {

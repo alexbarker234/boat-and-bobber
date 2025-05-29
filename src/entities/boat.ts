@@ -2,6 +2,7 @@ import { Collider, ColliderDesc, RigidBody, RigidBodyDesc } from "@dimforge/rapi
 import { Euler, MathUtils, Mesh, MeshStandardMaterial, Quaternion, Scene, Vector3 } from "three";
 import { FishingSystem } from "../fishing/fishingSystem";
 import { AssetLoader } from "../systems/assetLoader";
+import { JoystickState, MobileControls } from "../systems/mobileControls";
 import { PhysicsManager } from "../systems/physicsManager";
 import { PhysicsEntity } from "./physicsEntity";
 
@@ -11,6 +12,7 @@ export class Boat extends PhysicsEntity {
   private readonly rotationSpeed = 0.01;
   private currentTilt = 0;
   private fishingSystem!: FishingSystem;
+  private mobileControls: MobileControls;
 
   // Store initial transform values
   private readonly initialPosition = { x: 0, y: 0.01, z: 0 };
@@ -40,6 +42,10 @@ export class Boat extends PhysicsEntity {
     this.createMesh();
     this.setupPhysics();
     this.fishingSystem = new FishingSystem(scene, this);
+
+    // Setup mobile controls
+    this.mobileControls = new MobileControls();
+    this.setupMobileControls();
   }
 
   private createMesh() {
@@ -93,6 +99,30 @@ export class Boat extends PhysicsEntity {
           break;
       }
     });
+  }
+
+  private setupMobileControls() {
+    this.mobileControls.onJoystickChange = (state: JoystickState) => {
+      if (!this.fishingSystem.isFishing()) {
+        // Convert joystick input to movement keys
+        this.keys.forward = state.y < -0.3; // Push up
+        this.keys.backward = state.y > 0.3; // Push down
+        this.keys.left = state.x < -0.3; // Push left
+        this.keys.right = state.x > 0.3; // Push right
+      }
+    };
+
+    this.mobileControls.onFishButtonPress = () => {
+      // Simulate F key press
+      const event = new KeyboardEvent("keydown", { key: "f" });
+      window.dispatchEvent(event);
+    };
+
+    this.mobileControls.onFishButtonRelease = () => {
+      // Simulate F key release
+      const event = new KeyboardEvent("keyup", { key: "f" });
+      window.dispatchEvent(event);
+    };
   }
 
   private setupPhysics() {
@@ -241,5 +271,9 @@ export class Boat extends PhysicsEntity {
     this.mesh.position.set(this.initialPosition.x, this.initialPosition.y, this.initialPosition.z);
     const offsetQuaternion = new Quaternion().setFromEuler(new Euler(-Math.PI / 2, 0, 0));
     this.mesh.quaternion.copy(offsetQuaternion);
+  }
+
+  public destroy() {
+    this.mobileControls.destroy();
   }
 }

@@ -23,6 +23,7 @@ export class RhythmGame {
   private onComplete: ((success: boolean) => void) | null = null;
   private isHolding: boolean = false;
   private lastNoteTime: number = 0;
+  private touchStartTime: number = 0;
 
   public start(difficulty: "easy" | "medium" | "hard", onComplete: (success: boolean) => void) {
     this.isActive = true;
@@ -120,16 +121,41 @@ export class RhythmGame {
       }
     };
 
+    // Touch events for mobile
+    const handleTouchStart = (e: TouchEvent) => {
+      if (!this.isActive) return;
+      e.preventDefault();
+
+      if (!this.isHolding) {
+        this.isHolding = true;
+        this.touchStartTime = Date.now();
+        this.checkTapHit();
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!this.isActive) return;
+      e.preventDefault();
+
+      this.isHolding = false;
+    };
+
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("touchstart", handleTouchStart, { passive: false });
+    window.addEventListener("touchend", handleTouchEnd, { passive: false });
 
     // Store references for cleanup
     this.keyDownHandler = handleKeyDown;
     this.keyUpHandler = handleKeyUp;
+    this.touchStartHandler = handleTouchStart;
+    this.touchEndHandler = handleTouchEnd;
   }
 
   private keyDownHandler?: (e: KeyboardEvent) => void;
   private keyUpHandler?: (e: KeyboardEvent) => void;
+  private touchStartHandler?: (e: TouchEvent) => void;
+  private touchEndHandler?: (e: TouchEvent) => void;
 
   private checkTapHit() {
     for (const note of this.notes) {
@@ -224,6 +250,11 @@ export class RhythmGame {
     if (this.keyDownHandler && this.keyUpHandler) {
       window.removeEventListener("keydown", this.keyDownHandler);
       window.removeEventListener("keyup", this.keyUpHandler);
+    }
+
+    if (this.touchStartHandler && this.touchEndHandler) {
+      window.removeEventListener("touchstart", this.touchStartHandler);
+      window.removeEventListener("touchend", this.touchEndHandler);
     }
 
     if (this.onComplete) {

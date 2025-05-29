@@ -45,15 +45,23 @@ export class FishingUI {
 
     const trackWidth = Math.min(600, window.innerWidth * 0.8);
     const trackHeight = Math.max(80, Math.min(100, window.innerHeight * 0.12));
-    const noteSpeedPixels = (trackWidth / 6) * 200; // Relative to track width
-    const hitZoneX = trackWidth * 0.167; // 16.7% from left (100/600 = 0.167)
+    const noteSpeedPixels = (trackWidth / 6) * 200;
+    const hitZoneX = trackWidth * 0.167;
+
+    // Check if mobile device
+    const isMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+      "ontouchstart" in window;
 
     // Create the main game area
     let gameHTML = `
       <h2 class="fishing-game-title">Catch the Fish!</h2>        
       <p class="fishing-instructions">
-        Hold F/SPACE during <span class="green-text">green bars</span>, 
-        tap on <span class="gold-text">gold notes</span>!
+        ${
+          isMobile
+            ? 'Hold the <span class="green-text">Fish Button</span> during green bars, tap on <span class="gold-text">gold notes</span>!'
+            : 'Hold F/SPACE during <span class="green-text">green bars</span>, tap on <span class="gold-text">gold notes</span>!'
+        }
       </p>
     `;
 
@@ -143,7 +151,11 @@ export class FishingUI {
     // Instructions
     gameHTML += `
       <div class="fishing-bottom-instructions">
-        <p>Hold F/SPACE during green bars • Tap on gold notes • Don't hold outside zones!</p>
+        <p>${
+          isMobile
+            ? "Hold Fish Button during green bars • Tap on gold notes • Don't hold outside zones!"
+            : "Hold F/SPACE during green bars • Tap on gold notes • Don't hold outside zones!"
+        }</p>
         <p class="fishing-holding-status ${gameState.isHolding ? "holding" : ""}">
           ${gameState.isHolding ? "HOLDING" : "NOT HOLDING"}
         </p>
