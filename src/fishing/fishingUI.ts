@@ -147,7 +147,7 @@ export class FishingUI {
     this.rhythmContainer.innerHTML = gameHTML;
   }
 
-  public showResult(success: boolean, fishType?: string) {
+  public showResult(success: boolean) {
     this.showStatus(success ? "Success!" : "Fish Escaped!");
 
     setTimeout(() => {

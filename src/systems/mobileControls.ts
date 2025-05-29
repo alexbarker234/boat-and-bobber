@@ -52,11 +52,11 @@ export class MobileControls {
     if (!this.isMobileDevice()) return;
 
     // Joystick events
-    this.joystickManager.on("start", (evt: EventData, data: any) => {
+    this.joystickManager.on("start", () => {
       this.joystickState.active = true;
     });
 
-    this.joystickManager.on("move", (evt: EventData, data: any) => {
+    this.joystickManager.on("move", (_: EventData, data: any) => {
       if (data.vector) {
         // nipplejs provides vector with x and y from -1 to 1
         this.joystickState.x = data.vector.x;
@@ -65,7 +65,7 @@ export class MobileControls {
       }
     });
 
-    this.joystickManager.on("end", (evt: EventData, data: any) => {
+    this.joystickManager.on("end", () => {
       this.joystickState = { x: 0, y: 0, active: false };
       this.onJoystickChange?.(this.joystickState);
     });

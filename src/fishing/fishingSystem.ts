@@ -199,7 +199,7 @@ export class FishingSystem {
     this.reelIn();
 
     if (success && this.currentFish) {
-      this.ui.showResult(true, this.currentFish.type);
+      this.ui.showResult(true);
       console.log(`Caught a ${this.currentFish.type} fish!`);
     } else {
       this.ui.showResult(false);

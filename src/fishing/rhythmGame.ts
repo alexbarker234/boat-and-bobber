@@ -23,7 +23,6 @@ export class RhythmGame {
   private onComplete: ((success: boolean) => void) | null = null;
   private isHolding: boolean = false;
   private lastNoteTime: number = 0;
-  private touchStartTime: number = 0;
 
   public start(difficulty: "easy" | "medium" | "hard", onComplete: (success: boolean) => void) {
     this.isActive = true;
@@ -128,7 +127,6 @@ export class RhythmGame {
 
       if (!this.isHolding) {
         this.isHolding = true;
-        this.touchStartTime = Date.now();
         this.checkTapHit();
       }
     };
@@ -191,7 +189,7 @@ export class RhythmGame {
     this.notes = this.notes.filter((note) => note.time + note.duration > currentTime - 5);
 
     // Update progress based on current state
-    this.updateProgress(currentTime);
+    this.updateProgress();
 
     // Check win condition
     if (this.progress >= this.targetProgress) {
@@ -213,7 +211,7 @@ export class RhythmGame {
     };
   }
 
-  private updateProgress(currentTime: number) {
+  private updateProgress() {
     let progressChange = 0;
     let inValidZone = false;
 
