@@ -110,16 +110,8 @@ export class Boat {
     // Update fishing system first
     this.fishingSystem.update(this.mesh.position, this.mesh.quaternion);
 
-    // Only allow movement if not fishing
-    if (!this.fishingSystem.isFishing()) {
-      this.updateAngularVelocity();
-      this.updateLinearVelocity();
-    } else {
-      // Stop the boat when fishing
-      this.rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
-      this.rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
-    }
-
+    this.updateAngularVelocity();
+    this.updateLinearVelocity();
     this.updateMeshFromPhysics();
   }
 
@@ -127,26 +119,28 @@ export class Boat {
     const currentAngvel = this.rigidBody.angvel();
     const maxAngularSpeed = 0.5;
 
-    if (this.keys.left) {
-      const newAngvel = currentAngvel.y + this.rotationSpeed;
-      this.rigidBody.setAngvel(
-        {
-          x: 0,
-          y: Math.min(newAngvel, maxAngularSpeed),
-          z: 0
-        },
-        true
-      );
-    } else if (this.keys.right) {
-      const newAngvel = currentAngvel.y - this.rotationSpeed;
-      this.rigidBody.setAngvel(
-        {
-          x: 0,
-          y: Math.max(newAngvel, -maxAngularSpeed),
-          z: 0
-        },
-        true
-      );
+    if (!this.fishingSystem.isFishing()) {
+      if (this.keys.left) {
+        const newAngvel = currentAngvel.y + this.rotationSpeed;
+        this.rigidBody.setAngvel(
+          {
+            x: 0,
+            y: Math.min(newAngvel, maxAngularSpeed),
+            z: 0
+          },
+          true
+        );
+      } else if (this.keys.right) {
+        const newAngvel = currentAngvel.y - this.rotationSpeed;
+        this.rigidBody.setAngvel(
+          {
+            x: 0,
+            y: Math.max(newAngvel, -maxAngularSpeed),
+            z: 0
+          },
+          true
+        );
+      }
     }
   }
 
@@ -159,10 +153,11 @@ export class Boat {
     const forward = new Vector3(1, 0, 0).applyQuaternion(
       new THREE.Quaternion(physicsRotation.x, physicsRotation.y, physicsRotation.z, physicsRotation.w)
     );
-
-    if (this.keys.forward || this.keys.backward) {
-      const impulse = forward.multiplyScalar(this.keys.forward ? this.acceleration : -this.acceleration);
-      this.rigidBody.applyImpulse({ x: impulse.x, y: 0, z: impulse.z }, true);
+    if (!this.fishingSystem.isFishing()) {
+      if (this.keys.forward || this.keys.backward) {
+        const impulse = forward.multiplyScalar(this.keys.forward ? this.acceleration : -this.acceleration);
+        this.rigidBody.applyImpulse({ x: impulse.x, y: 0, z: impulse.z }, true);
+      }
     }
 
     // After applying forces, cap the velocity

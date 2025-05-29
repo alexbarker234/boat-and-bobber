@@ -15,6 +15,7 @@ export class FishingSystem {
   private currentFish: Fish | null = null;
   private waitStartTime: number = 0;
   private biteWaitTime: number = 0;
+  private biteStartTime: number = 0;
   private scene: Scene;
 
   private keys = {
@@ -33,19 +34,20 @@ export class FishingSystem {
   }
 
   private setupControls() {
-    window.addEventListener("mousedown", (e) => {
-      if (e.button === 0) {
-        // Left click
-        this.keys.fishing = true;
-        this.startFishing();
-      }
-    });
-
-    window.addEventListener("mouseup", (e) => {
-      if (e.button === 0) {
-        this.keys.fishing = false;
-        if (this.state === "casting" || this.state === "waiting") {
-          this.reelIn();
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "f" || e.key === "F") {
+        if (this.state === "bite") {
+          // Player pressed F during bite window - start minigame
+          this.startMinigame();
+        } else {
+          this.keys.fishing = !this.keys.fishing;
+          if (this.keys.fishing) {
+            this.startFishing();
+          } else {
+            if (this.state === "casting" || this.state === "waiting") {
+              this.reelIn();
+            }
+          }
         }
       }
     });
@@ -116,7 +118,7 @@ export class FishingSystem {
       this.state = "waiting";
       this.waitStartTime = Date.now();
       this.biteWaitTime = (Math.random() * 5 + 2) * 1000; // 2-7 seconds
-      this.ui.showStatus("Waiting for a bite... (hold to keep line out)");
+      this.ui.showStatus("Waiting for a bite... (press F to reel in)");
     }
   }
 
@@ -136,14 +138,8 @@ export class FishingSystem {
       if (fish) {
         this.currentFish = fish;
         this.state = "bite";
-        this.ui.showStatus("Fish on the line! Get ready...");
-
-        // Start minigame after a short delay
-        setTimeout(() => {
-          if (this.state === "bite") {
-            this.startMinigame();
-          }
-        }, 1000);
+        this.biteStartTime = Date.now();
+        this.ui.showStatus("Fish on the line! Press F quickly!");
       } else {
         // Reset wait time for another chance
         this.waitStartTime = Date.now();
@@ -157,7 +153,17 @@ export class FishingSystem {
       this.reelIn();
       return;
     }
-    // Waiting for minigame to start
+
+    const biteTime = Date.now() - this.biteStartTime;
+
+    // Player has 1 second to press F
+    if (biteTime >= 1000) {
+      // Time's up - fish escaped
+      this.ui.showStatus("Too slow! The fish got away...");
+      setTimeout(() => {
+        this.reelIn();
+      }, 1500);
+    }
   }
 
   private startMinigame() {
@@ -204,6 +210,7 @@ export class FishingSystem {
   private reelIn() {
     this.rod.reelIn();
     this.state = "idle";
+    this.keys.fishing = false;
     this.ui.hideStatus();
 
     // Remove line from scene
