@@ -1,8 +1,8 @@
 import { AmbientLight, DirectionalLight, Fog, Scene, Vector3 } from "three";
-import { Boat } from "./boat";
 import { DebugCube } from "./debugCube";
-import { Entity } from "./objects/entity";
-import { Rock } from "./objects/rock";
+import { Boat } from "./entities/boat";
+import { Entity } from "./entities/entity";
+import { Rock } from "./entities/rock";
 import { settings } from "./settings";
 import { Water } from "./water";
 

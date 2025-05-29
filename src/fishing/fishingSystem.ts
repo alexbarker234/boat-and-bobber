@@ -1,5 +1,5 @@
 import { Quaternion, Scene, Vector3 } from "three";
-import { Boat } from "../boat";
+import { Boat } from "../entities/boat";
 import { Fish, FishManager } from "./fish";
 import { FishingRod } from "./fishingRod";
 import { FishingUI } from "./fishingUI";

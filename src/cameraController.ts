@@ -1,5 +1,5 @@
 import { PerspectiveCamera, Vector3 } from "three";
-import { Boat } from "./boat";
+import { Boat } from "./entities/boat";
 import { settings } from "./settings";
 
 export class CameraController {

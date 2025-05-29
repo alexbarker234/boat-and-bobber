@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { BufferGeometry, CylinderGeometry, Line, LineBasicMaterial, Mesh, MeshStandardMaterial, Vector3 } from "three";
-import { Boat } from "../boat";
+import { Boat } from "../entities/boat";
 export class FishingRod {
   private rodMesh!: Mesh;
   private lineMesh: Line | null = null;
