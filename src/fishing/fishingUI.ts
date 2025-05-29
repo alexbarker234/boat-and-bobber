@@ -27,7 +27,6 @@ export class FishingUI {
     this.statusText.style.cssText = `
       background: rgba(0, 0, 0, 0.7);
       padding: clamp(8px, 1vw, 10px);
-      border-radius: 5px;
       margin-bottom: clamp(8px, 1vw, 10px);
     `;
     this.container.appendChild(this.statusText);
@@ -41,7 +40,6 @@ export class FishingUI {
       transform: translate(-50%, -50%);
       background: rgba(0, 0, 0, 0.9);
       padding: clamp(20px, 3vw, 30px);
-      border-radius: 15px;
       display: none;
       width: min(90vw, 700px);
       max-width: 90vw;
@@ -71,13 +69,13 @@ export class FishingUI {
 
     const trackWidth = Math.min(600, window.innerWidth * 0.8);
     const trackHeight = Math.max(80, Math.min(100, window.innerHeight * 0.12));
-    const noteSpeed = trackWidth / 6; // Relative to track width
+    const noteSpeedPixels = (trackWidth / 6) * 200; // Relative to track width
     const hitZoneX = trackWidth * 0.167; // 16.7% from left (100/600 = 0.167)
 
     // Create the main game area
     let gameHTML = `
-      <h2 style="margin-bottom: clamp(15px, 2vh, 20px); color: #4CAF50; font-size: clamp(18px, 3vw, 24px);">Catch the Fish!</h2>
-      <p style="margin-bottom: clamp(15px, 2vh, 20px); font-size: clamp(14px, 2vw, 16px);">
+      <h2 style="margin-bottom: clamp(15px, 2vh, 20px); color: #4CAF50; font-size: clamp(18px, 3vw, 24px);">Catch the Fish!</h2>        
+      <p style="margin-bottom: clamp(15px, 2vh, 20px); font-size: clamp(14px, 2vw, 16px); color: white;">
         Hold F/SPACE during <span style="color: #4CAF50;">green bars</span>, 
         tap on <span style="color: #FFD700;">gold notes</span>!
       </p>
@@ -95,7 +93,6 @@ export class FishingUI {
           max-width: ${trackWidth}px;
           height: clamp(16px, 2vh, 20px);
           background: #333;
-          border-radius: 10px;
           margin: 0 auto;
           position: relative;
           border: 2px solid #666;
@@ -104,7 +101,6 @@ export class FishingUI {
             width: ${Math.abs(progressPercentage)}%;
             height: 100%;
             background: ${progressColor};
-            border-radius: 8px;
             transition: width 0.1s ease;
           "></div>
           <div style="
@@ -130,9 +126,8 @@ export class FishingUI {
         width: 100%;
         max-width: ${trackWidth}px;
         height: ${trackHeight}px;
-        background: linear-gradient(to right, #222 0%, #333 ${(hitZoneX / trackWidth) * 100}%, #444 ${(hitZoneX / trackWidth) * 100}%, #333 100%);
+        background-color: #333;
         border: 2px solid #666;
-        border-radius: 10px;
         margin: clamp(15px, 2vh, 20px) auto;
         overflow: hidden;
       ">
@@ -147,86 +142,57 @@ export class FishingUI {
         width: 2px;
         height: 100%;
         background: white;
-        box-shadow: 0 0 5px white;
       "></div>
     `;
 
-    console.log(gameState.isHolding);
-
     // Render notes (convert ticks to seconds for display)
     gameState.notes.forEach((note) => {
-      const timeUntilNote = (note.time - gameState.currentTime) / 60; // Convert ticks to seconds
-      const noteX = hitZoneX + timeUntilNote * noteSpeed * 100; // TODO figure out how to position correctly
-      const noteDurationSeconds = note.duration; // Convert duration to seconds
+      const timeUntilNote = (note.time - gameState.currentTime) / 60;
+      const timeUntilEndNote = (note.time + note.duration - gameState.currentTime) / 60;
 
-      // Only render notes that are visible
-      if (noteX > -trackWidth * 0.2 && noteX < trackWidth * 1.2) {
-        if (note.type === "hold") {
-          const noteWidth = noteDurationSeconds * noteSpeed;
-          const isActive = timeUntilNote <= 0 && timeUntilNote >= -noteDurationSeconds;
+      const noteX = hitZoneX + timeUntilNote * noteSpeedPixels;
+      const noteEndX = hitZoneX + timeUntilEndNote * noteSpeedPixels;
+      const noteWidth = noteEndX - noteX;
 
-          let color = "#2E7D32"; // Dark green
-          let opacity = "0.8";
+      if (noteEndX > -trackWidth * 0.2 && noteX < trackWidth * 1.2) {
+        const isActive = timeUntilNote <= 0 && timeUntilNote >= -note.duration;
 
+        let color = "#2E7D32"; // Dark green
+        let opacity = "0.8";
+
+        if (note.hit) {
+          color = "#4CAF50"; // Bright green
+          opacity = "0.6";
+        } else if (isActive && gameState.isHolding) {
+          color = "#fc3003"; // Medium green
+          opacity = "1";
+        } else if (isActive) {
+          color = "#4CAF50"; // Bright green
+          opacity = "0.9";
+        }
+
+        if (note.type === "tap") {
+          color = "#FFD700";
           if (note.hit) {
-            color = "#4CAF50"; // Bright green
-            opacity = "0.6";
-          } else if (isActive && gameState.isHolding) {
-            color = "#fc3003"; // Medium green
-            opacity = "1";
+            color = "#fc3003"; // Light gold
           } else if (isActive) {
-            color = "#4CAF50"; // Bright green
-            opacity = "0.9";
+            color = "#FFEB3B"; // Bright gold
           }
+        }
 
-          const widthPos = Math.min(noteWidth, trackWidth - noteX);
+        const widthPos = Math.min(noteWidth, trackWidth - noteX);
 
-          gameHTML += `
+        gameHTML += `
             <div style="
               position: absolute;
               left: ${noteX}px;
-              top: ${trackHeight * 0.1}px;
+              top: 0px;
               width: ${widthPos}px;
-              height: ${trackHeight * 0.8}px;
+              height: 100%;
               background: ${color};
               opacity: ${opacity};
-              border-radius: 5px;
-              border: 2px solid #4CAF50;
             "></div>
           `;
-        } else if (note.type === "tap") {
-          const isActive = timeUntilNote <= 0 && timeUntilNote >= -noteDurationSeconds;
-
-          let color = "#FFD700"; // Gold
-          let scale = "1";
-
-          if (note.hit) {
-            color = "#fc3003"; // Light gold
-            scale = "0.8";
-          } else if (isActive) {
-            color = "#FFEB3B"; // Bright gold
-            scale = "1.2";
-          }
-
-          const noteSize = trackHeight * 0.6;
-          const leftPos = noteX - noteSize / 2;
-
-          gameHTML += `
-            <div style="
-              position: absolute;
-              left: ${leftPos}px;
-              top: ${trackHeight * 0.2}px;
-              width: ${noteSize}px;
-              height: ${noteSize}px;
-              background: ${color};
-              border-radius: 50%;
-              border: 3px solid #FF8F00;
-              transform: scale(${scale});
-              transition: transform 0.1s ease;
-              box-shadow: 0 0 10px ${color};
-            "></div>
-          `;
-        }
       }
     });
 

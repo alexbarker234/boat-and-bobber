@@ -8,6 +8,7 @@ import { DebugCube } from "./debugCube";
 import { Rock } from "./objects/rock";
 import { PhysicsManager } from "./physics/physicsManager";
 import { settings } from "./settings";
+import "./utils/mathExtensions";
 import { Water } from "./water";
 
 let boat: Boat;
@@ -16,12 +17,12 @@ let debugCube: DebugCube;
 
 // does this even make sense to do
 function getPixelSize() {
-  const baseWidth = 1024;
+  const basePixels = 1024 * 576;
   const basePixelSize = 6;
-  const currentWidth = window.innerWidth;
+  const currentPixels = window.innerWidth * window.innerHeight;
 
   // Scale pixel size based on screen width
-  const scale = currentWidth / baseWidth;
+  const scale = currentPixels / basePixels;
   return Math.max(1, Math.round(basePixelSize * scale));
 }
 

@@ -18,16 +18,16 @@ export class RhythmGame {
   private startTime: number = 0;
   private isActive: boolean = false;
   private progress: number = 0; // Overall progress (0-100)
+  private startProgress: number = 40;
   private targetProgress: number = 80; // Need 80% to succeed
   private onComplete: ((success: boolean) => void) | null = null;
   private isHolding: boolean = false;
-  private noteSpeed: number = 2; // Notes per second
   private lastNoteTime: number = 0;
 
   public start(difficulty: "easy" | "medium" | "hard", onComplete: (success: boolean) => void) {
     this.isActive = true;
     this.startTime = Date.now();
-    this.progress = 0;
+    this.progress = this.startProgress;
     this.onComplete = onComplete;
     this.isHolding = false;
     this.lastNoteTime = 0;
@@ -36,15 +36,12 @@ export class RhythmGame {
     // Set difficulty parameters
     switch (difficulty) {
       case "easy":
-        this.noteSpeed = 1.5;
         this.targetProgress = 70;
         break;
       case "medium":
-        this.noteSpeed = 2;
         this.targetProgress = 80;
         break;
       case "hard":
-        this.noteSpeed = 2.5;
         this.targetProgress = 90;
         break;
     }
@@ -61,15 +58,18 @@ export class RhythmGame {
   }
 
   private generateNextNote() {
-    const currentTime = (Date.now() - this.startTime) / 1000;
-    const noteTime = Math.max(this.lastNoteTime + 1 + Math.random() * 2, currentTime + 3); // 3 seconds ahead
+    const lastNote = this.notes[this.notes.length - 1];
+    let noteTime = 1;
+    // 1-2 seconds after last note ends
+    if (lastNote) {
+      noteTime = lastNote.time + lastNote.duration + Math.randBetween(0.1, 0.5);
+    }
 
     // 70% chance for hold note, 30% for tap note
     const isHoldNote = Math.random() < 0.7;
 
     if (isHoldNote) {
-      // Hold note: 1-3 seconds duration
-      const duration = 1 + Math.random() * 2;
+      const duration = Math.randBetween(0.3, 0.8);
       this.notes.push({
         time: noteTime,
         duration: duration,
@@ -80,7 +80,7 @@ export class RhythmGame {
       // Tap note: short duration, big reward
       this.notes.push({
         time: noteTime,
-        duration: 0.2, // Very short window
+        duration: 0.2,
         type: "tap",
         hit: false
       });
@@ -160,13 +160,13 @@ export class RhythmGame {
     }
 
     // Remove old notes that are way past
-    this.notes = this.notes.filter((note) => note.time > currentTime - 5);
+    this.notes = this.notes.filter((note) => note.time + note.duration > currentTime - 5);
 
     // Update progress based on current state
     this.updateProgress(currentTime);
 
     // Check win condition
-    if (this.progress >= this.targetProgress) {
+    if (this.progress >= this.targetProgress * 2000) {
       this.end(true);
     }
 
@@ -195,10 +195,8 @@ export class RhythmGame {
         if (note.type === "hold" && !note.hit) {
           const noteStart = note.time;
           const noteEnd = note.time + note.duration;
-
           if (currentTime >= noteStart && currentTime <= noteEnd) {
-            // Holding during valid zone - increase progress
-            progressChange += 15; // per second
+            progressChange += 15;
             inValidZone = true;
             break;
           }
@@ -207,18 +205,17 @@ export class RhythmGame {
 
       // If holding outside valid zone, decrease faster
       if (!inValidZone) {
-        progressChange -= 20; // per second
+        progressChange -= 20;
       }
     }
 
     // Natural decay when not holding
     if (!this.isHolding) {
-      progressChange -= 5; // per second
+      progressChange -= 5;
     }
 
     // Apply progress change (convert from per-second to per-frame)
-    this.progress += progressChange / 60; // Assuming 60fps
-    console.log(this.progress);
+    this.progress += progressChange / 60;
     this.progress = Math.max(-30, Math.min(100, this.progress)); // Clamp between -30 and 100
   }
 
