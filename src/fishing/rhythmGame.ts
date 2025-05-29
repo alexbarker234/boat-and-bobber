@@ -166,12 +166,12 @@ export class RhythmGame {
     this.updateProgress(currentTime);
 
     // Check win condition
-    if (this.progress >= this.targetProgress * 2000) {
+    if (this.progress >= this.targetProgress) {
       this.end(true);
     }
 
     // Check lose condition (progress drops too low)
-    if (this.progress <= -2000) {
+    if (this.progress <= 0) {
       this.end(false);
     }
 

@@ -12,41 +12,17 @@ export class FishingUI {
   private createUI() {
     // Main container
     this.container = document.createElement("div");
-    this.container.style.cssText = `
-      position: fixed;
-      top: 2vh;
-      left: 2vw;
-      color: white;
-      z-index: 1000;
-      pointer-events: none;
-    `;
+    this.container.className = "fishing-ui-container";
     document.body.appendChild(this.container);
 
     // Status text
     this.statusText = document.createElement("div");
-    this.statusText.style.cssText = `
-      background: rgba(0, 0, 0, 0.7);
-      padding: clamp(8px, 1vw, 10px);
-      margin-bottom: clamp(8px, 1vw, 10px);
-    `;
+    this.statusText.className = "fishing-status-text";
     this.container.appendChild(this.statusText);
 
     // Rhythm game container
     this.rhythmContainer = document.createElement("div");
-    this.rhythmContainer.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.9);
-      padding: clamp(20px, 3vw, 30px);
-      display: none;
-      width: min(90vw, 700px);
-      max-width: 90vw;
-      text-align: center;
-      border: 3px solid #4CAF50;
-      box-sizing: border-box;
-    `;
+    this.rhythmContainer.className = "fishing-rhythm-container";
     document.body.appendChild(this.rhythmContainer);
   }
 
@@ -74,10 +50,10 @@ export class FishingUI {
 
     // Create the main game area
     let gameHTML = `
-      <h2 style="margin-bottom: clamp(15px, 2vh, 20px); color: #4CAF50; font-size: clamp(18px, 3vw, 24px);">Catch the Fish!</h2>        
-      <p style="margin-bottom: clamp(15px, 2vh, 20px); font-size: clamp(14px, 2vw, 16px); color: white;">
-        Hold F/SPACE during <span style="color: #4CAF50;">green bars</span>, 
-        tap on <span style="color: #FFD700;">gold notes</span>!
+      <h2 class="fishing-game-title">Catch the Fish!</h2>        
+      <p class="fishing-instructions">
+        Hold F/SPACE during <span class="green-text">green bars</span>, 
+        tap on <span class="gold-text">gold notes</span>!
       </p>
     `;
 
@@ -87,33 +63,15 @@ export class FishingUI {
       gameState.progress >= gameState.targetProgress ? "#4CAF50" : gameState.progress >= 0 ? "#FFC107" : "#F44336";
 
     gameHTML += `
-      <div style="margin-bottom: clamp(15px, 2vh, 20px);">
-        <div style="
-          width: 100%;
-          max-width: ${trackWidth}px;
-          height: clamp(16px, 2vh, 20px);
-          background: #333;
-          margin: 0 auto;
-          position: relative;
-          border: 2px solid #666;
-        ">
-          <div style="
+      <div class="fishing-progress-container">
+        <div class="fishing-progress-bar" style="max-width: ${trackWidth}px;">
+          <div class="fishing-progress-fill" style="
             width: ${Math.abs(progressPercentage)}%;
-            height: 100%;
             background: ${progressColor};
-            transition: width 0.1s ease;
           "></div>
-          <div style="
-            position: absolute;
-            left: ${gameState.targetProgress}%;
-            top: -25%;
-            width: 2px;
-            height: 150%;
-            background: white;
-            box-shadow: 0 0 5px white;
-          "></div>
+          <div class="fishing-progress-target" style="left: ${gameState.targetProgress}%;"></div>
         </div>
-        <p style="margin: clamp(8px, 1vh, 10px) 0; font-size: clamp(14px, 2vw, 16px);">
+        <p class="fishing-progress-text">
           Progress: ${Math.round(progressPercentage)}% / ${gameState.targetProgress}%
         </p>
       </div>
@@ -121,28 +79,15 @@ export class FishingUI {
 
     // Note track
     gameHTML += `
-      <div style="
-        position: relative;
-        width: 100%;
+      <div class="fishing-note-track" style="
         max-width: ${trackWidth}px;
         height: ${trackHeight}px;
-        background-color: #333;
-        border: 2px solid #666;
-        margin: clamp(15px, 2vh, 20px) auto;
-        overflow: hidden;
       ">
     `;
 
     // Hit zone indicator
     gameHTML += `
-      <div style="
-        position: absolute;
-        left: ${(hitZoneX / trackWidth) * 100}%;
-        top: 0;
-        width: 2px;
-        height: 100%;
-        background: white;
-      "></div>
+      <div class="fishing-hit-zone" style="left: ${(hitZoneX / trackWidth) * 100}%;"></div>
     `;
 
     // Render notes (convert ticks to seconds for display)
@@ -183,12 +128,9 @@ export class FishingUI {
         const widthPos = Math.min(noteWidth, trackWidth - noteX);
 
         gameHTML += `
-            <div style="
-              position: absolute;
+            <div class="fishing-note" style="
               left: ${noteX}px;
-              top: 0px;
               width: ${widthPos}px;
-              height: 100%;
               background: ${color};
               opacity: ${opacity};
             "></div>
@@ -200,9 +142,9 @@ export class FishingUI {
 
     // Instructions
     gameHTML += `
-      <div style="margin-top: 20px; font-size: 14px; color: #999;">
+      <div class="fishing-bottom-instructions">
         <p>Hold F/SPACE during green bars • Tap on gold notes • Don't hold outside zones!</p>
-        <p style="color: ${gameState.isHolding ? "#4CAF50" : "#666"};">
+        <p class="fishing-holding-status ${gameState.isHolding ? "holding" : ""}">
           ${gameState.isHolding ? "HOLDING" : "NOT HOLDING"}
         </p>
       </div>
@@ -213,11 +155,11 @@ export class FishingUI {
 
   public showResult(success: boolean, fishType?: string) {
     this.rhythmContainer.innerHTML = `
-      <h2 style="color: ${success ? "#4CAF50" : "#F44336"};">
+      <h2 class="fishing-result-title ${success ? "success" : "failure"}">
         ${success ? "Success!" : "Fish Escaped!"}
       </h2>
-      ${success ? `<p style="font-size: 18px; margin: 20px 0;">You caught a <strong>${fishType}</strong> fish!</p>` : "<p style='font-size: 18px; margin: 20px 0;'>Better luck next time!</p>"}
-      <p style="font-size: 14px; color: #999;">Click to continue...</p>
+      ${success ? `<p class="fishing-result-text">You caught a <strong>${fishType}</strong> fish!</p>` : "<p class='fishing-result-text'>Better luck next time!</p>"}
+      <p class="fishing-result-continue">Click to continue...</p>
     `;
 
     setTimeout(() => {

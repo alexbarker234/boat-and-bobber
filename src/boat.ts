@@ -23,6 +23,13 @@ export class Boat {
     right: false
   };
 
+  get position() {
+    return this.mesh.position;
+  }
+  get quaternion() {
+    return this.mesh.quaternion;
+  }
+
   // shut up, yes its intiialised in the constructor
   private rigidBody!: RAPIER.RigidBody;
   private collider!: RAPIER.Collider;
@@ -31,7 +38,7 @@ export class Boat {
     this.setupKeyboardControls();
     this.createMesh();
     this.setupPhysics();
-    this.fishingSystem = new FishingSystem(scene);
+    this.fishingSystem = new FishingSystem(scene, this);
   }
 
   private createMesh() {
@@ -114,9 +121,7 @@ export class Boat {
   public update() {
     if (!this.mesh || !this.rigidBody) return;
 
-    // Update fishing system first
-    this.fishingSystem.update(this.mesh.position, this.mesh.quaternion);
-
+    this.fishingSystem.update();
     this.updateAngularVelocity();
     this.updateLinearVelocity();
     this.updateMeshFromPhysics();

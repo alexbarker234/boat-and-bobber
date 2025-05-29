@@ -1,0 +1,142 @@
+/* Fishing UI Styles */
+.fishing-ui-container {
+    position: fixed;
+    top: 2vh;
+    left: 2vw;
+    color: white;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.fishing-status-text {
+    background: rgba(0, 0, 0, 0.7);
+    padding: clamp(8px, 1vw, 10px);
+    margin-bottom: clamp(8px, 1vw, 10px);
+}
+
+.fishing-rhythm-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: clamp(20px, 3vw, 30px);
+    display: none;
+    width: min(90vw, 700px);
+    max-width: 90vw;
+    text-align: center;
+    border: 3px solid #4CAF50;
+    box-sizing: border-box;
+}
+
+.fishing-game-title {
+    margin-bottom: clamp(15px, 2vh, 20px);
+    color: #4CAF50;
+    font-size: clamp(18px, 3vw, 24px);
+}
+
+.fishing-instructions {
+    margin-bottom: clamp(15px, 2vh, 20px);
+    font-size: clamp(14px, 2vw, 16px);
+    color: white;
+}
+
+.fishing-instructions .green-text {
+    color: #4CAF50;
+}
+
+.fishing-instructions .gold-text {
+    color: #FFD700;
+}
+
+.fishing-progress-container {
+    margin-bottom: clamp(15px, 2vh, 20px);
+}
+
+.fishing-progress-bar {
+    width: 100%;
+    height: clamp(16px, 2vh, 20px);
+    background: #333;
+    margin: 0 auto;
+    position: relative;
+    border: 2px solid #666;
+}
+
+.fishing-progress-fill {
+    height: 100%;
+    transition: width 0.1s ease;
+}
+
+.fishing-progress-target {
+    position: absolute;
+    top: -25%;
+    width: 2px;
+    height: 150%;
+    background: white;
+    box-shadow: 0 0 5px white;
+}
+
+.fishing-progress-text {
+    margin: clamp(8px, 1vh, 10px) 0;
+    font-size: clamp(14px, 2vw, 16px);
+}
+
+.fishing-note-track {
+    position: relative;
+    width: 100%;
+    background-color: #333;
+    border: 2px solid #666;
+    margin: clamp(15px, 2vh, 20px) auto;
+    overflow: hidden;
+}
+
+.fishing-hit-zone {
+    position: absolute;
+    top: 0;
+    z-index: 5;
+    width: 2px;
+    height: 100%;
+    background: white;
+}
+
+.fishing-note {
+    position: absolute;
+    top: 0px;
+    height: 100%;
+}
+
+.fishing-bottom-instructions {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #999;
+}
+
+.fishing-holding-status {
+    color: #666;
+}
+
+.fishing-holding-status.holding {
+    color: #4CAF50;
+}
+
+.fishing-result-title {
+    margin-bottom: 20px;
+}
+
+.fishing-result-title.success {
+    color: #4CAF50;
+}
+
+.fishing-result-title.failure {
+    color: #F44336;
+}
+
+.fishing-result-text {
+    font-size: 18px;
+    margin: 20px 0;
+}
+
+.fishing-result-continue {
+    font-size: 14px;
+    color: #999;
+}

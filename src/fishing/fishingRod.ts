@@ -1,18 +1,21 @@
 import * as THREE from "three";
 import { BufferGeometry, CylinderGeometry, Line, LineBasicMaterial, Mesh, MeshStandardMaterial, Vector3 } from "three";
-
+import { Boat } from "../boat";
 export class FishingRod {
   private rodMesh!: Mesh;
   private lineMesh: Line | null = null;
   private hookPosition: Vector3 = new Vector3();
   private isLineOut = false;
   private lineLength = 0;
-  private maxLineLength = 5;
+  private maxLineLength = 3;
   private castSpeed = 0.1;
 
   private rodLength = 0.8;
 
-  constructor() {
+  private boatParent: Boat;
+
+  constructor(boatParent: Boat) {
+    this.boatParent = boatParent;
     this.createRod();
   }
 
@@ -26,15 +29,14 @@ export class FishingRod {
     this.rodMesh.geometry.translate(0, this.rodLength / 2, 0);
   }
 
-  public startCasting(startPosition: Vector3, direction: Vector3) {
+  public startCasting() {
     if (this.isLineOut) return;
 
     this.isLineOut = true;
     this.lineLength = 0;
-    this.hookPosition.copy(startPosition);
+    this.hookPosition.copy(this.boatParent.position);
 
-    // Create the fishing line
-    this.createLine(startPosition);
+    this.createLine(this.boatParent.position);
   }
 
   private createLine(startPosition: Vector3) {
@@ -45,7 +47,7 @@ export class FishingRod {
     this.lineMesh = new Line(geometry, material);
   }
 
-  public updateCasting(boatPosition: Vector3, boatDirection: Vector3): boolean {
+  public updateCasting(): boolean {
     if (!this.isLineOut || this.lineLength >= this.maxLineLength) {
       return this.lineLength >= this.maxLineLength;
     }
@@ -53,8 +55,8 @@ export class FishingRod {
     this.lineLength += this.castSpeed;
 
     // Update hook position - cast to the left of the boat
-    const leftDirection = new Vector3(-boatDirection.z, 0, -boatDirection.x).normalize();
-    this.hookPosition.copy(boatPosition).add(leftDirection.clone().multiplyScalar(this.lineLength));
+    const leftDirection = new Vector3(0, 1, 0).applyQuaternion(this.boatParent.quaternion);
+    this.hookPosition.copy(this.boatParent.position).add(leftDirection.clone().multiplyScalar(this.lineLength));
     this.hookPosition.y = -0.5;
 
     if (this.lineMesh) {

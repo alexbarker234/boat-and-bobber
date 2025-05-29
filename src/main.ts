@@ -8,6 +8,7 @@ import { DebugCube } from "./debugCube";
 import { Rock } from "./objects/rock";
 import { PhysicsManager } from "./physics/physicsManager";
 import { settings } from "./settings";
+import "./styles/global.css";
 import "./utils/mathExtensions";
 import { Water } from "./water";
 
@@ -23,7 +24,7 @@ function getPixelSize() {
 
   // Scale pixel size based on screen width
   const scale = currentPixels / basePixels;
-  return Math.max(1, Math.round(basePixelSize * scale));
+  return Math.clamp(Math.round(basePixelSize * scale), 3, 6);
 }
 
 function spawnRocks(scene: Scene) {

@@ -1,9 +1,9 @@
 import { Quaternion, Scene, Vector3 } from "three";
+import { Boat } from "../boat";
 import { Fish, FishManager } from "./fish";
 import { FishingRod } from "./fishingRod";
 import { FishingUI } from "./fishingUI";
 import { RhythmGame } from "./rhythmGame";
-
 export type FishingState = "idle" | "casting" | "waiting" | "bite" | "minigame" | "reeling";
 
 export class FishingSystem {
@@ -17,14 +17,16 @@ export class FishingSystem {
   private biteWaitTime: number = 0;
   private biteStartTime: number = 0;
   private scene: Scene;
+  private boatParent: Boat;
 
   private keys = {
     fishing: false
   };
 
-  constructor(scene: Scene) {
+  constructor(scene: Scene, boatParent: Boat) {
     this.scene = scene;
-    this.rod = new FishingRod();
+    this.boatParent = boatParent;
+    this.rod = new FishingRod(this.boatParent);
     this.fishManager = new FishManager();
     this.rhythmGame = new RhythmGame();
     this.ui = new FishingUI();
@@ -64,14 +66,14 @@ export class FishingSystem {
     this.ui.showStatus("Casting line...");
   }
 
-  public update(boatPosition: Vector3, boatQuaternion: Quaternion) {
+  public update() {
     // Update rod position
-    this.rod.updatePosition(boatPosition, boatQuaternion);
+    this.rod.updatePosition(this.boatParent.position, this.boatParent.quaternion);
     // Position rod on the left side of the boat and angle it 45 degrees upwards
     const rodOffset = new Vector3(0, 0.25, 0.25);
-    rodOffset.applyQuaternion(boatQuaternion);
-    this.rod.getRodMesh().position.copy(boatPosition).add(rodOffset);
-    this.rod.getRodMesh().quaternion.copy(boatQuaternion);
+    rodOffset.applyQuaternion(this.boatParent.quaternion);
+    this.rod.getRodMesh().position.copy(this.boatParent.position).add(rodOffset);
+    this.rod.getRodMesh().quaternion.copy(this.boatParent.quaternion);
 
     // Apply 45-degree upward rotation
     const upwardRotation = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), Math.PI / 4);
@@ -79,7 +81,7 @@ export class FishingSystem {
 
     switch (this.state) {
       case "casting":
-        this.updateCasting(boatPosition, boatQuaternion);
+        this.updateCasting();
         break;
       case "waiting":
         this.updateWaiting();
@@ -99,20 +101,18 @@ export class FishingSystem {
     }
   }
 
-  private updateCasting(boatPosition: Vector3, boatQuaternion: Quaternion) {
+  private updateCasting() {
     if (!this.keys.fishing) {
       this.reelIn();
       return;
     }
 
-    const forward = new Vector3(1, 0, 0).applyQuaternion(boatQuaternion);
-
     // Check if we need to start casting
     if (!this.rod.getLineMesh()) {
-      this.rod.startCasting(boatPosition, forward);
+      this.rod.startCasting();
     }
 
-    const castComplete = this.rod.updateCasting(boatPosition, forward);
+    const castComplete = this.rod.updateCasting();
 
     if (castComplete) {
       this.state = "waiting";
