@@ -244,3 +244,37 @@
         display: none;
     }
 }
+
+/* Disable zoom and pinch gestures */
+html {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+}
+
+body {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    overscroll-behavior: none;
+}
+
+/* Prevent double-tap zoom */
+* {
+    touch-action: manipulation;
+}
+
+/* Prevent zoom on input focus (mobile Safari) */
+input, textarea, select {
+    font-size: 16px;
+}

@@ -27,13 +27,27 @@ export class MobileControls {
       return;
     }
 
-    // Create joystick using nipplejs
+    // Create a specific zone for the joystick
+    const joystickZone = document.createElement("div");
+    joystickZone.className = "joystick-zone";
+    joystickZone.style.cssText = `
+      position: fixed;
+      left: 20px;
+      bottom: 20px;
+      width: 120px;
+      height: 120px;
+      z-index: 1000;
+      pointer-events: auto;
+    `;
+    document.body.appendChild(joystickZone);
+
+    // Create joystick using the specific zone
     this.joystickManager = nipplejs.create({
-      zone: document.body,
+      zone: joystickZone, // Use the specific zone instead of document.body
       mode: "static",
-      position: { left: "80px", bottom: "80px" },
+      position: { left: "50%", bottom: "50%" }, // Center within the zone
       color: "blue",
-      size: 120,
+      size: 100,
       restOpacity: 0.7
     });
 
@@ -106,6 +120,11 @@ export class MobileControls {
     }
     if (this.fishButton) {
       this.fishButton.remove();
+    }
+    // Clean up the joystick zone
+    const joystickZone = document.querySelector(".joystick-zone");
+    if (joystickZone) {
+      joystickZone.remove();
     }
   }
 }

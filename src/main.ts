@@ -46,12 +46,12 @@ async function init() {
   await PhysicsManager.initialize(scene);
   sceneManager = new SceneManager(scene);
 
-  cameraController = new CameraController();
-  const camera = cameraController.getCamera();
-
   renderer = new WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
+
+  cameraController = new CameraController(renderer);
+  const camera = cameraController.getCamera();
 
   // Setup post-processing
   composer = new EffectComposer(renderer);
