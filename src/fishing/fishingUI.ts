@@ -107,28 +107,27 @@ export class FishingUI {
       if (noteEndX > -trackWidth * 0.2 && noteX < trackWidth * 1.2) {
         const isActive = timeUntilNote <= 0 && timeUntilNote >= -note.duration;
 
-        let color = "#2E7D32"; // Dark green
+        let color = "#6abe30"; // Dark green
         let opacity = "0.8";
 
         if (note.hit) {
           color = "#4CAF50"; // Bright green
           opacity = "0.6";
         } else if (isActive && gameState.isHolding) {
-          color = "#fc3003"; // Medium green
+          color = "#639bff"; // Blue
           opacity = "1";
-        } else if (isActive) {
-          color = "#4CAF50"; // Bright green
-          opacity = "0.9";
         }
 
         if (note.type === "tap") {
-          color = "#FFD700";
+          color = "#FFD700"; // Gold
           if (note.hit) {
-            color = "#fc3003"; // Light gold
-          } else if (isActive) {
-            color = "#FFEB3B"; // Bright gold
+            color = "#639bff"; // Blue
           }
         }
+
+        // if (isActive) {
+        //     color = "#fc3003";
+        //   }
 
         const widthPos = Math.min(noteWidth, trackWidth - noteX);
 

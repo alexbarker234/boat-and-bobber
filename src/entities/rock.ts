@@ -18,7 +18,7 @@ const ROCK_VARIANTS = {
 } as const;
 
 export class Rock extends PhysicsEntity {
-  private mesh: Mesh | null = null;
+  private mesh!: Mesh;
   // shut up, yes its intiialised in the constructor
   public rigidBody!: RAPIER.RigidBody;
   public collider!: RAPIER.Collider;
@@ -61,7 +61,7 @@ export class Rock extends PhysicsEntity {
     PhysicsManager.getInstance().createDebugMesh(this.collider);
   }
 
-  public getMesh(): Mesh | null {
+  public getMesh(): Mesh {
     return this.mesh;
   }
 

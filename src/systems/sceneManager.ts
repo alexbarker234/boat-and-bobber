@@ -95,11 +95,29 @@ export class SceneManager {
       placedPositions.push(position.clone());
       const rock = new Rock(size, position);
       const rockMesh = rock.getMesh();
-      if (rockMesh) {
-        this.scene.add(rockMesh);
-        rocks.push(rock);
-        this.entities.push(rock);
-      }
+      this.scene.add(rockMesh);
+      rocks.push(rock);
+      this.entities.push(rock);
+    }
+
+    // Generate a ring of rocks around the origin
+    const ringRadius = 40;
+    const ringCount = 200;
+    const ringRocks: Rock[] = [];
+
+    for (let i = 0; i < ringCount; i++) {
+      const rock = new Rock(
+        "large",
+        new Vector3(
+          Math.cos(i * ((2 * Math.PI) / ringCount)) * ringRadius,
+          0,
+          Math.sin(i * ((2 * Math.PI) / ringCount)) * ringRadius
+        )
+      );
+      const rockMesh = rock.getMesh();
+      this.scene.add(rockMesh);
+      ringRocks.push(rock);
+      this.entities.push(rock);
     }
   }
 }
