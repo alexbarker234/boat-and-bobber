@@ -2,6 +2,8 @@ import { Color, PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPixelatedPass } from "three/examples/jsm/postprocessing/RenderPixelatedPass.js";
 import { Water } from "../water";
+import { SaveManager } from "./saveManager";
+
 export interface PlayerSettings {
   name: string;
   boatColor: Color;
@@ -13,6 +15,7 @@ export class MainMenu {
   private colorPicker!: HTMLInputElement;
   private onStartSingleplayer: (settings: PlayerSettings) => void;
   private playerSettings: PlayerSettings;
+  private saveManager: SaveManager;
 
   // 3D Scene elements
   private scene!: Scene;
@@ -23,10 +26,11 @@ export class MainMenu {
 
   constructor(onStartSingleplayer: (settings: PlayerSettings) => void) {
     this.onStartSingleplayer = onStartSingleplayer;
-    this.playerSettings = {
-      name: "Player",
-      boatColor: new Color(0x4a90e2)
-    };
+    this.saveManager = SaveManager.getInstance();
+
+    // Load saved settings or use defaults
+    this.playerSettings = this.saveManager.loadPlayerSettings() || this.saveManager.getDefaultPlayerSettings();
+
     this.createBackground3D();
     this.createMenuHTML();
     this.setupEventListeners();
@@ -100,7 +104,7 @@ export class MainMenu {
           
           <div class="setting-group">
             <label for="boat-color">Boat Color:</label>
-            <input type="color" id="boat-color" class="color-picker" value="#4a90e2" />
+            <input type="color" id="boat-color" class="color-picker" value="#${this.playerSettings.boatColor.getHexString()}" />
           </div>
         </div>
 
@@ -124,6 +128,7 @@ export class MainMenu {
     this.nameInput.addEventListener("input", (e) => {
       const target = e.target as HTMLInputElement;
       this.playerSettings.name = target.value.trim() || "Player";
+      this.savePlayerSettings();
     });
 
     // Color picker handler
@@ -131,6 +136,7 @@ export class MainMenu {
       const target = e.target as HTMLInputElement;
       const colorValue = target.value;
       this.playerSettings.boatColor = new Color(colorValue);
+      this.savePlayerSettings();
     });
 
     // Singleplayer button handler
@@ -147,12 +153,18 @@ export class MainMenu {
     });
   }
 
+  private savePlayerSettings() {
+    this.saveManager.savePlayerSettings(this.playerSettings);
+  }
+
   private startSingleplayer() {
     // Validate name
     if (!this.playerSettings.name.trim()) {
       this.playerSettings.name = "Player";
       this.nameInput.value = "Player";
     }
+
+    this.savePlayerSettings();
 
     this.hide();
     this.onStartSingleplayer(this.playerSettings);
