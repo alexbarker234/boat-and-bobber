@@ -53,19 +53,16 @@ async function init() {
   cameraController = new CameraController(renderer);
   const camera = cameraController.getCamera();
 
-  // Setup post-processing
+  // post-processing
   composer = new EffectComposer(renderer);
   pixelPass = new RenderPixelatedPass(getPixelSize(), scene, camera);
   composer.addPass(pixelPass);
 
-  // Handle window resize
   handleWindowResize();
 
-  // Update the animation loop
   function animate() {
     requestAnimationFrame(animate);
 
-    // Update physics world
     PhysicsManager.getInstance().update();
 
     sceneManager.updateSceneEntities();
