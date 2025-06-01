@@ -7,6 +7,7 @@ import { SaveManager } from "./saveManager";
 
 interface OtherPlayer {
   mesh: THREE.Mesh;
+  nameElement: HTMLDivElement;
   lastPosition: THREE.Vector3;
   desiredPosition: THREE.Vector3;
   lastRotation: { x: number; y: number; z: number; w: number };
@@ -22,14 +23,35 @@ export class NetworkManager {
 
   // Player representation geometry
   private playerGeometry!: THREE.BufferGeometry<THREE.NormalBufferAttributes>;
+  private nameContainer!: HTMLDivElement;
 
-  constructor(private scene: THREE.Scene) {
+  // Distance scaling constants
+  private readonly MIN_SCALE = 0.5;
+  private readonly MAX_SCALE = 1.0;
+  private readonly MAX_DISTANCE = 20;
+  private readonly FADE_DISTANCE = 10;
+
+  constructor(
+    private scene: THREE.Scene,
+    private camera: THREE.Camera,
+    private renderer: THREE.WebGLRenderer
+  ) {
     const geometry = AssetLoader.getInstance().getAsset("benchy");
     if (!geometry) {
       console.error("Boat model not loaded!");
       return;
     }
     this.playerGeometry = geometry;
+    this.setupNameContainer();
+    this.loadStyles();
+  }
+
+  private loadStyles() {
+    // Load the CSS file for player names
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "/src/styles/playerNames.css";
+    document.head.appendChild(link);
   }
 
   public async connect(): Promise<void> {
@@ -50,6 +72,57 @@ export class NetworkManager {
         console.log("Retrying connection...");
         this.connect();
       }, 3000);
+    }
+  }
+
+  private setupNameContainer() {
+    // Create container for player names
+    this.nameContainer = document.createElement("div");
+    this.nameContainer.className = "player-name-container";
+    document.body.appendChild(this.nameContainer);
+  }
+
+  private createNameElement(playerName: string): HTMLDivElement {
+    const nameElement = document.createElement("div");
+    nameElement.textContent = playerName;
+    nameElement.className = "player-name";
+
+    this.nameContainer.appendChild(nameElement);
+    return nameElement;
+  }
+  private updateNamePosition(otherPlayer: OtherPlayer) {
+    const nameOffset = new THREE.Vector3(0, 1, 0);
+    const worldPosition = otherPlayer.mesh.position.clone().add(nameOffset);
+
+    const distance = this.camera.position.distanceTo(otherPlayer.mesh.position);
+
+    const screenPosition = worldPosition.clone().project(this.camera);
+
+    const canvas = this.renderer.domElement;
+    const x = (screenPosition.x * 0.5 + 0.5) * canvas.clientWidth;
+    const y = (screenPosition.y * -0.5 + 0.5) * canvas.clientHeight;
+
+    const isVisible =
+      screenPosition.z < 1 && x >= -100 && x <= canvas.clientWidth + 100 && y >= -50 && y <= canvas.clientHeight + 50;
+
+    if (isVisible) {
+      const normalizedDistance = Math.max(0, Math.min(1, distance / this.MAX_DISTANCE));
+      const scale = this.MAX_SCALE - normalizedDistance * (this.MAX_SCALE - this.MIN_SCALE);
+
+      let opacity = 1;
+      if (distance > this.FADE_DISTANCE) {
+        const fadeRange = this.MAX_DISTANCE - this.FADE_DISTANCE;
+        const fadeProgress = Math.min(1, (distance - this.FADE_DISTANCE) / fadeRange);
+        opacity = 1 - fadeProgress;
+      }
+
+      otherPlayer.nameElement.style.left = `${x}px`;
+      otherPlayer.nameElement.style.top = `${y}px`;
+      otherPlayer.nameElement.style.transform = `translate(-50%, -100%) scale(${scale})`;
+      otherPlayer.nameElement.style.opacity = opacity.toString();
+      otherPlayer.nameElement.style.display = "block";
+    } else {
+      otherPlayer.nameElement.style.display = "none";
     }
   }
 
@@ -74,8 +147,11 @@ export class NetworkManager {
       playerMesh.receiveShadow = true;
       this.scene.add(playerMesh);
 
+      const nameElement = this.createNameElement(player.name);
+
       const otherPlayer: OtherPlayer = {
         mesh: playerMesh,
+        nameElement: nameElement,
         lastPosition: new THREE.Vector3(player.x, player.y, player.z),
         desiredPosition: new THREE.Vector3(player.x, player.y, player.z),
         lastRotation: { x: player.quaternionX, y: player.quaternionY, z: player.quaternionZ, w: player.quaternionW },
@@ -112,6 +188,7 @@ export class NetworkManager {
       const otherPlayer = this.otherPlayers.get(sessionId);
       if (otherPlayer) {
         this.scene.remove(otherPlayer.mesh);
+        this.nameContainer.removeChild(otherPlayer.nameElement);
         this.otherPlayers.delete(sessionId);
       }
     });
@@ -143,6 +220,11 @@ export class NetworkManager {
 
       otherPlayer.mesh.setRotationFromQuaternion(currentQuaternion);
     });
+
+    // Update name positions for all players
+    this.otherPlayers.forEach((otherPlayer) => {
+      this.updateNamePosition(otherPlayer);
+    });
   }
 
   public sendPlayerUpdate(position: THREE.Vector3, quaternion: THREE.Quaternion, currentTime: number) {
@@ -165,6 +247,13 @@ export class NetworkManager {
 
       this.room.send("playerUpdate", message);
       this.lastNetworkUpdate = currentTime;
+    }
+  }
+
+  public cleanup() {
+    // Clean up name container when network manager is destroyed
+    if (this.nameContainer && this.nameContainer.parentNode) {
+      this.nameContainer.parentNode.removeChild(this.nameContainer);
     }
   }
 }

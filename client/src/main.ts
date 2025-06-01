@@ -84,15 +84,6 @@ export class Main {
     await PhysicsManager.initialize(scene);
     this.sceneManager = new SceneManager(scene);
 
-    this.networkManager = new NetworkManager(scene);
-    await this.networkManager.connect();
-
-    // todo move this somewhere better
-    if (this.sceneManager.boat) {
-      this.sceneManager.boat.setColor(playerSettings.boatColor);
-      this.sceneManager.boat.setPlayerName(playerSettings.name);
-    }
-
     this.renderer = new WebGLRenderer();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(this.renderer.domElement);
@@ -118,6 +109,15 @@ export class Main {
     );
 
     this.gameLoop.start();
+
+    this.networkManager = new NetworkManager(scene, camera, this.renderer);
+    await this.networkManager.connect();
+
+    // todo move this somewhere better
+    if (this.sceneManager.boat) {
+      this.sceneManager.boat.setColor(playerSettings.boatColor);
+      this.sceneManager.boat.setPlayerName(playerSettings.name);
+    }
   }
 
   private update(deltaTime: number, currentTime: number) {

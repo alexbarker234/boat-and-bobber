@@ -57,12 +57,10 @@ export class GameLoop {
       this.accumulator -= this.targetFrameTime;
 
       this.tickCount++;
-      iterations++;
 
-      if (iterations >= maxIterations) {
-        alert("Game loop exceeded maximum iterations. Reloading...");
+      if (++iterations >= maxIterations) {
         window.location.reload();
-        return;
+        break;
       }
     }
 
