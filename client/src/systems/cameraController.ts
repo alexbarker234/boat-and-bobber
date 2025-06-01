@@ -21,7 +21,7 @@ export class CameraController {
     );
 
     this.offset = new Vector3(0, 2.5, 3);
-    this.lerpFactor = 0.02;
+    this.lerpFactor = 0.04;
     this.target = new Vector3(0, 0, 0);
 
     this.camera.position.set(0, 0, 0);

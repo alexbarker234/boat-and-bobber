@@ -9,8 +9,8 @@ import { PhysicsEntity } from "./physicsEntity";
 
 export class Boat extends PhysicsEntity {
   private mesh!: Mesh;
-  private readonly acceleration = 0.002;
-  private readonly rotationSpeed = 0.01;
+  private readonly acceleration = 0.0048;
+  private readonly rotationSpeed = 0.024;
   private currentTilt = 0;
   private fishingSystem!: FishingSystem;
   private inputManager: InputManager;
@@ -68,7 +68,7 @@ export class Boat extends PhysicsEntity {
       .setTranslation(0, 0.01, 0)
       .setGravityScale(0)
       .setLinearDamping(0)
-      .setAngularDamping(0.8);
+      .setAngularDamping(1.2);
 
     this.rigidBody = world.createRigidBody(rigidBodyDesc);
 
@@ -145,7 +145,7 @@ export class Boat extends PhysicsEntity {
 
     // After applying forces, cap the velocity
     const velocity = this.rigidBody.linvel();
-    const maxSpeed = 1;
+    const maxSpeed = 2.4;
     const speed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
     if (speed > maxSpeed) {
       const scale = maxSpeed / speed;
@@ -153,7 +153,7 @@ export class Boat extends PhysicsEntity {
     }
 
     // Manually dampen velocity
-    this.rigidBody.setLinvel({ x: velocity.x * 0.992, y: 0, z: velocity.z * 0.992 }, true);
+    this.rigidBody.setLinvel({ x: velocity.x * 0.98, y: 0, z: velocity.z * 0.98 }, true);
     const linvel = this.rigidBody.linvel();
     if (Math.abs(linvel.x) < 0.001) this.rigidBody.setLinvel({ x: 0, y: 0, z: this.rigidBody.linvel().z }, true);
     if (Math.abs(linvel.z) < 0.001) this.rigidBody.setLinvel({ x: this.rigidBody.linvel().x, y: 0, z: 0 }, true);

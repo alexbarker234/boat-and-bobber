@@ -50,12 +50,15 @@ export class GameLoop {
     this.accumulator += deltaTime;
 
     // Fixed timestep updates
-    while (this.accumulator >= this.targetFrameTime) {
+    const maxIterations = 10; // Prevent spiral of death
+    let iterations = 0;
+    while (this.accumulator >= this.targetFrameTime && iterations < maxIterations) {
       this.updateCallback(this.targetFrameTime / 1000, currentTime);
       this.accumulator -= this.targetFrameTime;
 
       // Count ticks
       this.tickCount++;
+      iterations++;
     }
 
     // Render
