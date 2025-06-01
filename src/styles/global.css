@@ -201,7 +201,7 @@
     touch-action: none;
     user-select: none;
     transition: transform 0.1s ease, background-color 0.1s ease;
-    background-image: url('../assets/FishIcon.png');
+    background-image: url('./assets/FishIcon.png');
     background-size: 50%;
     background-repeat: no-repeat;
     background-position: center;
