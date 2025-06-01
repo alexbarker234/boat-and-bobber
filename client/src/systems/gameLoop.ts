@@ -50,18 +50,22 @@ export class GameLoop {
     this.accumulator += deltaTime;
 
     // Fixed timestep updates
-    const maxIterations = 10; // Prevent spiral of death
+    const maxIterations = 1000;
     let iterations = 0;
-    while (this.accumulator >= this.targetFrameTime && iterations < maxIterations) {
+    while (this.accumulator >= this.targetFrameTime) {
       this.updateCallback(this.targetFrameTime / 1000, currentTime);
       this.accumulator -= this.targetFrameTime;
 
-      // Count ticks
       this.tickCount++;
       iterations++;
+
+      if (iterations >= maxIterations) {
+        alert("Game loop exceeded maximum iterations. Reloading...");
+        window.location.reload();
+        return;
+      }
     }
 
-    // Render
     this.renderCallback();
 
     // FPS calculation
