@@ -20,25 +20,12 @@ let inputManager: InputManager;
 let mainMenu: MainMenu;
 let gameInitialized = false;
 
-// does this even make sense to do
-function getPixelSize() {
-  const basePixels = 1024 * 576;
-  const basePixelSize = 6;
-  const currentPixels = window.innerWidth * window.innerHeight;
-
-  // Scale pixel size based on screen width
-  const scale = currentPixels / basePixels;
-  return Math.clamp(Math.round(basePixelSize * scale), 3, 6);
-}
-
 function handleWindowResize() {
   function onWindowResize() {
     if (gameInitialized) {
       cameraController.handleResize();
       renderer.setSize(window.innerWidth, window.innerHeight);
       composer.setSize(window.innerWidth, window.innerHeight);
-
-      pixelPass.setPixelSize(getPixelSize());
     }
   }
 
@@ -83,7 +70,7 @@ async function initGame(playerSettings: PlayerSettings) {
 
   // post-processing
   composer = new EffectComposer(renderer);
-  pixelPass = new RenderPixelatedPass(getPixelSize(), scene, camera);
+  pixelPass = new RenderPixelatedPass(4, scene, camera);
   composer.addPass(pixelPass);
 
   gameInitialized = true;
