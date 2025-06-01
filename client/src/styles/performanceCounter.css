@@ -1,0 +1,50 @@
+.performance-counter {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 1000;
+    pointer-events: none;
+    backdrop-filter: blur(4px);
+    min-width: 80px;
+}
+
+.performance-counter .fps-display {
+    color: #00ff00;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.performance-counter .tps-display {
+    color: #00ffff;
+    display: block;
+}
+
+/* Performance-based color classes */
+.performance-counter .fps-display.good {
+    color: #00ff00;
+}
+
+.performance-counter .fps-display.moderate {
+    color: #ffff00;
+}
+
+.performance-counter .fps-display.poor {
+    color: #ff0000;
+}
+
+.performance-counter .tps-display.good {
+    color: #00ffff;
+}
+
+.performance-counter .tps-display.moderate {
+    color: #ffff00;
+}
+
+.performance-counter .tps-display.poor {
+    color: #ff0000;
+}
