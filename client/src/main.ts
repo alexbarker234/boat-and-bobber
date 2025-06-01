@@ -5,101 +5,132 @@ import "./styles/global.css";
 import "./styles/mainMenu.css";
 import { AssetLoader } from "./systems/assetLoader";
 import { CameraController } from "./systems/cameraController";
+import { GameLoop } from "./systems/gameLoop";
 import { InputManager } from "./systems/inputManager";
 import { MainMenu, PlayerSettings } from "./systems/mainMenu";
+import { NetworkManager } from "./systems/networkManager";
 import { PhysicsManager } from "./systems/physicsManager";
 import { SceneManager } from "./systems/sceneManager";
 import "./utils/mathExtensions";
 
-let cameraController: CameraController;
-let renderer: WebGLRenderer;
-let composer: EffectComposer;
-let pixelPass: RenderPixelatedPass;
-let sceneManager: SceneManager;
-let inputManager: InputManager;
-let mainMenu: MainMenu;
-let gameInitialized = false;
+export class Main {
+  private static instance: Main;
+  private cameraController!: CameraController;
+  private renderer!: WebGLRenderer;
+  private composer!: EffectComposer;
+  private pixelPass!: RenderPixelatedPass;
+  private sceneManager!: SceneManager;
+  private inputManager!: InputManager;
+  private mainMenu!: MainMenu;
+  private gameInitialized = false;
+  private networkManager!: NetworkManager;
+  private gameLoop!: GameLoop;
 
-function handleWindowResize() {
-  function onWindowResize() {
-    if (gameInitialized) {
-      cameraController.handleResize();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      composer.setSize(window.innerWidth, window.innerHeight);
+  private constructor() {}
+
+  public static getInstance(): Main {
+    if (!Main.instance) {
+      Main.instance = new Main();
     }
+    return Main.instance;
   }
 
-  window.addEventListener("resize", onWindowResize);
-}
-
-function handleCleanup() {
-  window.addEventListener("beforeunload", () => {
-    if (inputManager) {
-      inputManager.destroy();
-    }
-    if (mainMenu) {
-      mainMenu.destroy();
-    }
-  });
-}
-
-async function load() {
-  await AssetLoader.getInstance().loadAssets();
-}
-
-async function initGame(playerSettings: PlayerSettings) {
-  inputManager = InputManager.getInstance();
-
-  const scene = new Scene();
-  // init physics before creating objects
-  await PhysicsManager.initialize(scene);
-  sceneManager = new SceneManager(scene);
-
-  // todo move this somewhere better
-  if (sceneManager.boat) {
-    sceneManager.boat.setColor(playerSettings.boatColor);
-    sceneManager.boat.setPlayerName(playerSettings.name);
+  public getNetworkManager() {
+    return this.networkManager;
   }
 
-  renderer = new WebGLRenderer();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+  private handleWindowResize() {
+    const onWindowResize = () => {
+      if (this.gameInitialized) {
+        this.cameraController.handleResize();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.composer.setSize(window.innerWidth, window.innerHeight);
+      }
+    };
 
-  cameraController = new CameraController(renderer);
-  const camera = cameraController.getCamera();
+    window.addEventListener("resize", onWindowResize);
+  }
 
-  // post-processing
-  composer = new EffectComposer(renderer);
-  pixelPass = new RenderPixelatedPass(4, scene, camera);
-  composer.addPass(pixelPass);
+  private handleCleanup() {
+    window.addEventListener("beforeunload", () => {
+      if (this.gameLoop) {
+        this.gameLoop.stop();
+      }
+      if (this.inputManager) {
+        this.inputManager.destroy();
+      }
+      if (this.mainMenu) {
+        this.mainMenu.destroy();
+      }
+    });
+  }
 
-  gameInitialized = true;
+  private async load() {
+    await AssetLoader.getInstance().loadAssets();
+  }
 
-  function animate() {
-    requestAnimationFrame(animate);
+  private async initGame(playerSettings: PlayerSettings) {
+    this.inputManager = InputManager.getInstance();
 
+    const scene = new Scene();
+    // init physics before creating objects
+    await PhysicsManager.initialize(scene);
+    this.sceneManager = new SceneManager(scene);
+
+    this.networkManager = new NetworkManager(scene);
+    await this.networkManager.connect();
+
+    // todo move this somewhere better
+    if (this.sceneManager.boat) {
+      this.sceneManager.boat.setColor(playerSettings.boatColor);
+      this.sceneManager.boat.setPlayerName(playerSettings.name);
+    }
+
+    this.renderer = new WebGLRenderer();
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(this.renderer.domElement);
+
+    this.cameraController = new CameraController(this.renderer);
+    const camera = this.cameraController.getCamera();
+
+    // post-processing
+    this.composer = new EffectComposer(this.renderer);
+    this.pixelPass = new RenderPixelatedPass(4, scene, camera);
+    this.composer.addPass(this.pixelPass);
+
+    this.gameInitialized = true;
+
+    // game loop with update and render callbacks
+    this.gameLoop = new GameLoop(
+      (deltaTime: number, currentTime: number) => this.update(deltaTime, currentTime),
+      () => this.render()
+    );
+
+    this.gameLoop.start();
+  }
+
+  private update(deltaTime: number, currentTime: number) {
     PhysicsManager.getInstance().update();
-
-    sceneManager.updateSceneEntities();
-
-    cameraController.update(sceneManager.boat);
-
-    composer.render();
+    this.sceneManager.updateSceneEntities();
+    this.networkManager.update(deltaTime);
+    this.cameraController.update(this.sceneManager.boat);
   }
 
-  animate();
+  private render() {
+    this.composer.render();
+  }
+
+  public async init() {
+    this.handleWindowResize();
+    this.handleCleanup();
+    this.load();
+
+    this.mainMenu = new MainMenu((playerSettings: PlayerSettings) => {
+      this.initGame(playerSettings);
+    });
+
+    this.mainMenu.show();
+  }
 }
 
-async function init() {
-  handleWindowResize();
-  handleCleanup();
-  load();
-
-  mainMenu = new MainMenu((playerSettings: PlayerSettings) => {
-    initGame(playerSettings);
-  });
-
-  mainMenu.show();
-}
-
-init();
+Main.getInstance().init();

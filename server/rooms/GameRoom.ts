@@ -16,8 +16,10 @@ export class GameRoom extends Room<GameState> {
         player.x = message.position.x;
         player.y = message.position.y;
         player.z = message.position.z;
-        player.rotationX = message.rotation.x;
-        player.rotationY = message.rotation.y;
+        player.quaternionX = message.rotation.x;
+        player.quaternionY = message.rotation.y;
+        player.quaternionZ = message.rotation.z;
+        player.quaternionW = message.rotation.w;
       }
     });
   }
@@ -30,8 +32,10 @@ export class GameRoom extends Room<GameState> {
     player.x = 0;
     player.y = 5;
     player.z = 10;
-    player.rotationX = 0;
-    player.rotationY = 0;
+    player.quaternionX = 0;
+    player.quaternionY = 0;
+    player.quaternionZ = 0;
+    player.quaternionW = 1;
     player.connected = true;
 
     this.state.players.set(client.sessionId, player);

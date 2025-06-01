@@ -1,6 +1,7 @@
 import { Collider, ColliderDesc, RigidBody, RigidBodyDesc } from "@dimforge/rapier3d-compat";
-import { Color, Euler, MathUtils, Mesh, MeshStandardMaterial, Quaternion, Scene, Vector3 } from "three";
+import { Color, Euler, MathUtils, Mesh, MeshToonMaterial, Quaternion, Scene, Vector3 } from "three";
 import { FishingSystem } from "../fishing/fishingSystem";
+import { Main } from "../main";
 import { AssetLoader } from "../systems/assetLoader";
 import { InputManager } from "../systems/inputManager";
 import { PhysicsManager } from "../systems/physicsManager";
@@ -52,7 +53,7 @@ export class Boat extends PhysicsEntity {
       return;
     }
 
-    const material = new MeshStandardMaterial({ color: 0xffffff });
+    const material = new MeshToonMaterial({ color: 0xffffff });
     this.mesh = new Mesh(geometry, material);
     this.mesh.scale.set(0.02, 0.02, 0.02);
     this.mesh.position.set(0, 0, 0);
@@ -90,6 +91,7 @@ export class Boat extends PhysicsEntity {
     this.updateAngularVelocity();
     this.updateLinearVelocity();
     this.updateMeshFromPhysics();
+    this.updateNetwork();
   }
 
   private updateAngularVelocity() {
@@ -216,7 +218,7 @@ export class Boat extends PhysicsEntity {
   }
 
   public setColor(color: Color) {
-    if (this.mesh && this.mesh.material instanceof MeshStandardMaterial) {
+    if (this.mesh && this.mesh.material instanceof MeshToonMaterial) {
       this.mesh.material.color.copy(color);
     }
   }
@@ -227,6 +229,11 @@ export class Boat extends PhysicsEntity {
 
   public getPlayerName(): string {
     return this.playerName;
+  }
+
+  // Networking
+  public updateNetwork() {
+    Main.getInstance().getNetworkManager().sendPlayerUpdate(this.position, this.quaternion, Date.now());
   }
 
   public destroy() {
