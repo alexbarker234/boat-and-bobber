@@ -2,6 +2,8 @@ import { Client, getStateCallbacks, Room } from "colyseus.js";
 import * as THREE from "three";
 import type { GameState } from "../../../server/schema/GameState";
 import type { PlayerUpdateMessage } from "../types/types";
+import { AssetLoader } from "./assetLoader";
+import { SaveManager } from "./saveManager";
 
 interface OtherPlayer {
   mesh: THREE.Mesh;
@@ -19,14 +21,26 @@ export class NetworkManager {
   private networkUpdateRate = 1000 / 20; // 20 updates per second
 
   // Player representation geometry
-  private playerGeometry = new THREE.CapsuleGeometry(1, 2, 4, 8);
-  private playerMaterial = new THREE.MeshToonMaterial({ color: 0xff6b6b });
+  private playerGeometry!: THREE.BufferGeometry<THREE.NormalBufferAttributes>;
 
-  constructor(private scene: THREE.Scene) {}
+  constructor(private scene: THREE.Scene) {
+    const geometry = AssetLoader.getInstance().getAsset("benchy");
+    if (!geometry) {
+      console.error("Boat model not loaded!");
+      return;
+    }
+    this.playerGeometry = geometry;
+  }
 
   public async connect(): Promise<void> {
     try {
-      this.room = await this.client.joinOrCreate("game");
+      const saveManager = SaveManager.getInstance();
+      const playerSettings = saveManager.loadPlayerSettings() || saveManager.getDefaultPlayerSettings();
+
+      this.room = await this.client.joinOrCreate("game", {
+        name: playerSettings.name,
+        color: `#${playerSettings.boatColor.getHexString()}`
+      });
       console.log("Connected to server!");
       this.setupPlayerListeners();
     } catch (error) {
@@ -52,8 +66,10 @@ export class NetworkManager {
       if (sessionId === this.room!.sessionId) return;
 
       // Create visual representation for other players
-      const playerMesh = new THREE.Mesh(this.playerGeometry, this.playerMaterial.clone());
+      const material = new THREE.MeshToonMaterial({ color: player.color });
+      const playerMesh = new THREE.Mesh(this.playerGeometry, material);
       playerMesh.position.set(player.x, player.y, player.z);
+      playerMesh.scale.set(0.02, 0.02, 0.02);
       playerMesh.castShadow = true;
       playerMesh.receiveShadow = true;
       this.scene.add(playerMesh);

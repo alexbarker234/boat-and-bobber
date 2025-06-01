@@ -29,6 +29,8 @@ export class GameRoom extends Room<GameState> {
 
     const player = new Player();
     player.id = client.sessionId;
+    player.name = options.name;
+    player.color = options.color;
     player.x = 0;
     player.y = 5;
     player.z = 10;

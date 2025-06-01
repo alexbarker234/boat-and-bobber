@@ -12,5 +12,6 @@ export class Player extends Schema {
 
   @type("string") id: string = "";
   @type("string") name: string = "";
+  @type("string") color: string = "";
   @type("boolean") connected: boolean = true;
 }
