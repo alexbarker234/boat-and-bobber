@@ -1,9 +1,29 @@
-:root {
-    --ui-background: rgba(0, 0, 0, 0.7);
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-* {
-    box-sizing: border-box;
+body {
+    font-family: "Pixelify Sans", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+
+    overflow: hidden;
+    background: #000;
+}
+
+canvas {
+    display: block;
+}
+
+input {
+    font-family: "Pixelify Sans", sans-serif;
+}
+
+:root {
+    --ui-background: rgba(0, 0, 0, 0.7);
 }
 
 button {

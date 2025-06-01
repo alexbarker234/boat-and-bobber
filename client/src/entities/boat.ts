@@ -1,5 +1,5 @@
 import { Collider, ColliderDesc, RigidBody, RigidBodyDesc } from "@dimforge/rapier3d-compat";
-import { Euler, MathUtils, Mesh, MeshStandardMaterial, Quaternion, Scene, Vector3 } from "three";
+import { Color, Euler, MathUtils, Mesh, MeshStandardMaterial, Quaternion, Scene, Vector3 } from "three";
 import { FishingSystem } from "../fishing/fishingSystem";
 import { AssetLoader } from "../systems/assetLoader";
 import { InputManager } from "../systems/inputManager";
@@ -13,6 +13,7 @@ export class Boat extends PhysicsEntity {
   private currentTilt = 0;
   private fishingSystem!: FishingSystem;
   private inputManager: InputManager;
+  private playerName: string = "Player";
 
   // Store initial transform values
   private readonly initialPosition = { x: 0, y: 0.01, z: 0 };
@@ -212,6 +213,20 @@ export class Boat extends PhysicsEntity {
     this.mesh.position.set(this.initialPosition.x, this.initialPosition.y, this.initialPosition.z);
     const offsetQuaternion = new Quaternion().setFromEuler(new Euler(-Math.PI / 2, 0, 0));
     this.mesh.quaternion.copy(offsetQuaternion);
+  }
+
+  public setColor(color: Color) {
+    if (this.mesh && this.mesh.material instanceof MeshStandardMaterial) {
+      this.mesh.material.color.copy(color);
+    }
+  }
+
+  public setPlayerName(name: string) {
+    this.playerName = name;
+  }
+
+  public getPlayerName(): string {
+    return this.playerName;
   }
 
   public destroy() {
