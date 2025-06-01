@@ -4,6 +4,7 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import "./styles/global.css";
 import { AssetLoader } from "./systems/assetLoader";
 import { CameraController } from "./systems/cameraController";
+import { InputManager } from "./systems/inputManager";
 import { PhysicsManager } from "./systems/physicsManager";
 import { SceneManager } from "./systems/sceneManager";
 import "./utils/mathExtensions";
@@ -13,6 +14,7 @@ let renderer: WebGLRenderer;
 let composer: EffectComposer;
 let pixelPass: RenderPixelatedPass;
 let sceneManager: SceneManager;
+let inputManager: InputManager;
 
 // does this even make sense to do
 function getPixelSize() {
@@ -37,7 +39,17 @@ function handleWindowResize() {
   window.addEventListener("resize", onWindowResize);
 }
 
+function handleCleanup() {
+  window.addEventListener("beforeunload", () => {
+    if (inputManager) {
+      inputManager.destroy();
+    }
+  });
+}
+
 async function init() {
+  inputManager = InputManager.getInstance();
+
   // load all assets first
   await AssetLoader.getInstance().loadAssets();
 
@@ -59,6 +71,7 @@ async function init() {
   composer.addPass(pixelPass);
 
   handleWindowResize();
+  handleCleanup();
 
   function animate() {
     requestAnimationFrame(animate);

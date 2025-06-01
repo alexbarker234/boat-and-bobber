@@ -1,9 +1,11 @@
 import { Quaternion, Scene, Vector3 } from "three";
 import { Boat } from "../entities/boat";
+import { InputManager } from "../systems/inputManager";
 import { Fish, FishManager } from "./fish";
 import { FishingRod } from "./fishingRod";
 import { FishingUI } from "./fishingUI";
 import { RhythmGame } from "./rhythmGame";
+
 export type FishingState = "idle" | "casting" | "waiting" | "bite" | "minigame" | "reeling";
 
 export class FishingSystem {
@@ -19,10 +21,6 @@ export class FishingSystem {
   private scene: Scene;
   private boatParent: Boat;
 
-  private keys = {
-    fishing: false
-  };
-
   constructor(scene: Scene, boatParent: Boat) {
     this.scene = scene;
     this.boatParent = boatParent;
@@ -31,27 +29,13 @@ export class FishingSystem {
     this.rhythmGame = new RhythmGame();
     this.ui = new FishingUI();
 
-    this.setupControls();
+    this.setupInputCallbacks();
     this.addRodToScene();
   }
 
-  private setupControls() {
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "f" || e.key === "F") {
-        if (this.state === "bite") {
-          // Player pressed F during bite window - start minigame
-          this.startMinigame();
-        } else {
-          this.keys.fishing = !this.keys.fishing;
-          if (this.keys.fishing) {
-            this.startFishing();
-          } else {
-            if (this.state === "casting" || this.state === "waiting") {
-              this.reelIn();
-            }
-          }
-        }
-      }
+  private setupInputCallbacks() {
+    InputManager.getInstance().addCallbacks({
+      onFishPress: () => this.handleFishingPress()
     });
   }
 
@@ -102,12 +86,17 @@ export class FishingSystem {
     this.rod.updateLine();
   }
 
-  private updateCasting() {
-    if (!this.keys.fishing) {
+  private handleFishingPress() {
+    if (this.state === "bite") {
+      this.startMinigame();
+    } else if (this.state === "idle") {
+      this.startFishing();
+    } else if (this.state === "casting" || this.state === "waiting") {
       this.reelIn();
-      return;
     }
+  }
 
+  private updateCasting() {
     // Check if we need to start casting
     if (!this.rod.getLineMesh()) {
       this.rod.startCasting();
@@ -119,16 +108,11 @@ export class FishingSystem {
       this.state = "waiting";
       this.waitStartTime = Date.now();
       this.biteWaitTime = (Math.random() * 5 + 2) * 1000; // 2-7 seconds
-      this.ui.showStatus("Waiting for a bite... (press F to reel in)");
+      this.ui.showStatus("Waiting for a bite... (release F to reel in)");
     }
   }
 
   private updateWaiting() {
-    if (!this.keys.fishing) {
-      this.reelIn();
-      return;
-    }
-
     const waitTime = Date.now() - this.waitStartTime;
 
     if (waitTime >= this.biteWaitTime) {
@@ -150,11 +134,6 @@ export class FishingSystem {
   }
 
   private updateBite() {
-    if (!this.keys.fishing) {
-      this.reelIn();
-      return;
-    }
-
     const biteTime = Date.now() - this.biteStartTime;
 
     // Player has 1 second to press F
@@ -212,7 +191,6 @@ export class FishingSystem {
   private reelIn() {
     this.rod.reelIn();
     this.state = "idle";
-    this.keys.fishing = false;
     this.ui.hideStatus();
 
     // Remove line from scene
@@ -228,5 +206,12 @@ export class FishingSystem {
 
   public isFishing(): boolean {
     return this.state !== "idle";
+  }
+
+  public destroy() {
+    const inputManager = InputManager.getInstance();
+    inputManager.clearCallbacks({
+      onFishPress: () => this.handleFishingPress()
+    });
   }
 }

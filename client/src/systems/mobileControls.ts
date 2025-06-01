@@ -8,7 +8,7 @@ export interface JoystickState {
 
 export class MobileControls {
   private joystickManager!: JoystickManager;
-  private fishButton!: HTMLDivElement;
+  private fishButton!: HTMLButtonElement;
   private joystickState: JoystickState = { x: 0, y: 0, active: false };
 
   // Callbacks for input events
@@ -43,7 +43,7 @@ export class MobileControls {
     });
 
     // Fish button
-    this.fishButton = document.createElement("div");
+    this.fishButton = document.createElement("button");
     this.fishButton.className = "mobile-fish-button";
     document.body.appendChild(this.fishButton);
   }
@@ -71,25 +71,17 @@ export class MobileControls {
     });
 
     // Fish button events
-    this.fishButton.addEventListener(
-      "touchstart",
-      (e) => {
-        e.preventDefault();
-        this.fishButton.classList.add("pressed");
-        this.onFishButtonPress?.();
-      },
-      { passive: false }
-    );
+    this.fishButton.addEventListener("mousedown", () => {
+      this.onFishButtonPress?.();
+    });
 
-    this.fishButton.addEventListener(
-      "touchend",
-      (e) => {
-        e.preventDefault();
-        this.fishButton.classList.remove("pressed");
-        this.onFishButtonRelease?.();
-      },
-      { passive: false }
-    );
+    this.fishButton.addEventListener("mouseup", () => {
+      this.onFishButtonRelease?.();
+    });
+
+    this.fishButton.addEventListener("click", (e) => {
+      e.preventDefault();
+    });
   }
 
   private isMobileDevice(): boolean {

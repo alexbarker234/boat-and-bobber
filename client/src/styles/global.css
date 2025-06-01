@@ -6,6 +6,21 @@
     box-sizing: border-box;
 }
 
+button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+
 /* Fishing UI Styles */
 .fishing-ui-container {
     position: fixed;
@@ -210,13 +225,10 @@
     image-rendering: crisp-edges;
 }
 
-.mobile-fish-button.pressed {
-    transform: scale(0.95);
-    background-color: rgba(0, 0, 0, 0.8);
-}
 
 .mobile-fish-button:active {
     transform: scale(0.9);
+    background-color: rgba(0, 0, 0, 0.8);
 }
 
 

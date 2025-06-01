@@ -2,7 +2,7 @@ import { Collider, ColliderDesc, RigidBody, RigidBodyDesc } from "@dimforge/rapi
 import { Euler, MathUtils, Mesh, MeshStandardMaterial, Quaternion, Scene, Vector3 } from "three";
 import { FishingSystem } from "../fishing/fishingSystem";
 import { AssetLoader } from "../systems/assetLoader";
-import { JoystickState, MobileControls } from "../systems/mobileControls";
+import { InputManager } from "../systems/inputManager";
 import { PhysicsManager } from "../systems/physicsManager";
 import { PhysicsEntity } from "./physicsEntity";
 
@@ -12,18 +12,11 @@ export class Boat extends PhysicsEntity {
   private readonly rotationSpeed = 0.01;
   private currentTilt = 0;
   private fishingSystem!: FishingSystem;
-  private mobileControls: MobileControls;
+  private inputManager: InputManager;
 
   // Store initial transform values
   private readonly initialPosition = { x: 0, y: 0.01, z: 0 };
   private readonly initialRotation = { x: 0, y: 0, z: 0, w: 1 };
-
-  private keys = {
-    forward: false,
-    backward: false,
-    left: false,
-    right: false
-  };
 
   get position() {
     return this.mesh.position;
@@ -38,14 +31,17 @@ export class Boat extends PhysicsEntity {
 
   constructor(scene: Scene) {
     super();
-    this.setupKeyboardControls();
+    this.inputManager = InputManager.getInstance();
     this.createMesh();
     this.setupPhysics();
     this.fishingSystem = new FishingSystem(scene, this);
+    this.setupInputCallbacks();
+  }
 
-    // Setup mobile controls
-    this.mobileControls = new MobileControls();
-    this.setupMobileControls();
+  private setupInputCallbacks() {
+    this.inputManager.addCallbacks({
+      onResetPress: () => this.resetBoat()
+    });
   }
 
   private createMesh() {
@@ -60,69 +56,6 @@ export class Boat extends PhysicsEntity {
     this.mesh.scale.set(0.02, 0.02, 0.02);
     this.mesh.position.set(0, 0, 0);
     this.mesh.rotation.set(-Math.PI / 2, 0, 0);
-  }
-
-  private setupKeyboardControls() {
-    window.addEventListener("keydown", (e) => {
-      switch (e.key.toLowerCase()) {
-        case "w":
-          this.keys.forward = true;
-          break;
-        case "s":
-          this.keys.backward = true;
-          break;
-        case "a":
-          this.keys.left = true;
-          break;
-        case "d":
-          this.keys.right = true;
-          break;
-        case "r":
-          this.resetBoat();
-          break;
-      }
-    });
-
-    window.addEventListener("keyup", (e) => {
-      switch (e.key.toLowerCase()) {
-        case "w":
-          this.keys.forward = false;
-          break;
-        case "s":
-          this.keys.backward = false;
-          break;
-        case "a":
-          this.keys.left = false;
-          break;
-        case "d":
-          this.keys.right = false;
-          break;
-      }
-    });
-  }
-
-  private setupMobileControls() {
-    this.mobileControls.onJoystickChange = (state: JoystickState) => {
-      if (!this.fishingSystem.isFishing()) {
-        // Convert joystick input to movement keys
-        this.keys.forward = state.y < -0.3; // Push up
-        this.keys.backward = state.y > 0.3; // Push down
-        this.keys.left = state.x < -0.3; // Push left
-        this.keys.right = state.x > 0.3; // Push right
-      }
-    };
-
-    this.mobileControls.onFishButtonPress = () => {
-      // Simulate F key press
-      const event = new KeyboardEvent("keydown", { key: "f" });
-      window.dispatchEvent(event);
-    };
-
-    this.mobileControls.onFishButtonRelease = () => {
-      // Simulate F key release
-      const event = new KeyboardEvent("keyup", { key: "f" });
-      window.dispatchEvent(event);
-    };
   }
 
   private setupPhysics() {
@@ -161,9 +94,10 @@ export class Boat extends PhysicsEntity {
   private updateAngularVelocity() {
     const currentAngvel = this.rigidBody.angvel();
     const maxAngularSpeed = 0.5;
+    const inputState = this.inputManager.getInputState();
 
     if (!this.fishingSystem.isFishing()) {
-      if (this.keys.left) {
+      if (inputState.movement.left) {
         const newAngvel = currentAngvel.y + this.rotationSpeed;
         this.rigidBody.setAngvel(
           {
@@ -173,7 +107,7 @@ export class Boat extends PhysicsEntity {
           },
           true
         );
-      } else if (this.keys.right) {
+      } else if (inputState.movement.right) {
         const newAngvel = currentAngvel.y - this.rotationSpeed;
         this.rigidBody.setAngvel(
           {
@@ -196,9 +130,12 @@ export class Boat extends PhysicsEntity {
     const forward = new Vector3(1, 0, 0).applyQuaternion(
       new Quaternion(physicsRotation.x, physicsRotation.y, physicsRotation.z, physicsRotation.w)
     );
+
+    const inputState = this.inputManager.getInputState();
+
     if (!this.fishingSystem.isFishing()) {
-      if (this.keys.forward || this.keys.backward) {
-        const impulse = forward.multiplyScalar(this.keys.forward ? this.acceleration : -this.acceleration);
+      if (inputState.movement.forward || inputState.movement.backward) {
+        const impulse = forward.multiplyScalar(inputState.movement.forward ? this.acceleration : -this.acceleration);
         this.rigidBody.applyImpulse({ x: impulse.x, y: 0, z: impulse.z }, true);
       }
     }
@@ -278,6 +215,6 @@ export class Boat extends PhysicsEntity {
   }
 
   public destroy() {
-    this.mobileControls.destroy();
+    this.fishingSystem.destroy();
   }
 }
