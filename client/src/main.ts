@@ -133,6 +133,7 @@ export class Main {
   }
 
   private render() {
+    this.networkManager.updateUI();
     this.composer.render();
   }
 

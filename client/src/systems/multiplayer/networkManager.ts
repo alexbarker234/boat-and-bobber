@@ -154,7 +154,7 @@ export class NetworkManager {
     // Interpolate positions and rotations for all other players
     const interpolationSpeed = 20;
 
-    this.otherPlayers.forEach((otherPlayer) => {
+    this.otherPlayers.forEach((otherPlayer, sessionId) => {
       // Interpolate position
       otherPlayer.mesh.position.lerp(otherPlayer.desiredPosition, interpolationSpeed * deltaTime);
 
@@ -176,13 +176,14 @@ export class NetworkManager {
 
       otherPlayer.mesh.setRotationFromQuaternion(currentQuaternion);
     });
+  }
 
-    // Update name positions for all players
-    this.otherPlayers.forEach((otherPlayer) => {
-      this.playerUI.updateNamePosition(otherPlayer.nameElement, otherPlayer.mesh.position);
+  public updateUI() {
+    this.otherPlayers.forEach((otherPlayer, sessionId) => {
+      this.playerUI.updatePlayerPosition(sessionId, otherPlayer.mesh.position);
     });
 
-    // Update chat positions
+    // Update chat positions (handles local player)
     this.playerUI.updateChatPositions();
   }
 

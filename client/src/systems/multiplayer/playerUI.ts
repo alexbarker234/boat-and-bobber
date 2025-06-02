@@ -7,11 +7,15 @@ interface ChatMessage {
   element: HTMLDivElement;
 }
 
+interface PlayerUIContainer {
+  container: HTMLDivElement;
+  nameElement?: HTMLDivElement;
+  chatMessages: ChatMessage[];
+}
+
 export class PlayerUI {
-  private nameContainer!: HTMLDivElement;
-  private chatContainer!: HTMLDivElement;
-  private playerNames = new Map<string, HTMLDivElement>();
-  private playerChats = new Map<string, ChatMessage[]>();
+  private uiContainer!: HTMLDivElement;
+  private playerUIs = new Map<string, PlayerUIContainer>();
   private localPlayerId?: string;
   private localPlayerPosition?: THREE.Vector3;
 
@@ -30,20 +34,13 @@ export class PlayerUI {
     private camera: THREE.Camera,
     private renderer: THREE.WebGLRenderer
   ) {
-    this.setupNameContainer();
-    this.setupChatContainer();
+    this.setupUIContainer();
   }
 
-  private setupNameContainer() {
-    this.nameContainer = document.createElement("div");
-    this.nameContainer.className = "player-name-container";
-    document.body.appendChild(this.nameContainer);
-  }
-
-  private setupChatContainer() {
-    this.chatContainer = document.createElement("div");
-    this.chatContainer.className = "player-chat-container";
-    document.body.appendChild(this.chatContainer);
+  private setupUIContainer() {
+    this.uiContainer = document.createElement("div");
+    this.uiContainer.className = "player-ui-container";
+    document.body.appendChild(this.uiContainer);
   }
 
   public setLocalPlayerId(playerId: string): void {
@@ -54,47 +51,56 @@ export class PlayerUI {
     this.localPlayerPosition = position.clone();
   }
 
+  private createPlayerUIContainer(playerId: string): PlayerUIContainer {
+    const container = document.createElement("div");
+    container.className = "player-ui";
+    this.uiContainer.appendChild(container);
+
+    const playerUI: PlayerUIContainer = {
+      container,
+      chatMessages: []
+    };
+
+    this.playerUIs.set(playerId, playerUI);
+    return playerUI;
+  }
+
   public createNameElement(playerId: string, playerName: string): HTMLDivElement {
+    let playerUI = this.playerUIs.get(playerId);
+    if (!playerUI) {
+      playerUI = this.createPlayerUIContainer(playerId);
+    }
+
     const nameElement = document.createElement("div");
     nameElement.textContent = playerName;
     nameElement.className = "player-name";
+    playerUI.container.appendChild(nameElement);
+    playerUI.nameElement = nameElement;
 
-    this.nameContainer.appendChild(nameElement);
-    this.playerNames.set(playerId, nameElement);
     return nameElement;
   }
 
   public removeNameElement(playerId: string): void {
-    const nameElement = this.playerNames.get(playerId);
-    if (nameElement && this.nameContainer.contains(nameElement)) {
-      this.nameContainer.removeChild(nameElement);
-      this.playerNames.delete(playerId);
-    }
-
-    // Clean up chat messages for this player
-    const chatMessages = this.playerChats.get(playerId);
-    if (chatMessages) {
-      chatMessages.forEach((chat) => {
-        if (this.chatContainer.contains(chat.element)) {
-          this.chatContainer.removeChild(chat.element);
-        }
-      });
-      this.playerChats.delete(playerId);
+    const playerUI = this.playerUIs.get(playerId);
+    if (playerUI) {
+      if (this.uiContainer.contains(playerUI.container)) {
+        this.uiContainer.removeChild(playerUI.container);
+      }
+      this.playerUIs.delete(playerId);
     }
   }
 
   public addChatMessage(playerId: string, message: string): void {
-    if (!this.playerChats.has(playerId)) {
-      this.playerChats.set(playerId, []);
+    let playerUI = this.playerUIs.get(playerId);
+    if (!playerUI) {
+      playerUI = this.createPlayerUIContainer(playerId);
     }
-
-    const chatMessages = this.playerChats.get(playerId)!;
 
     // Create chat element
     const chatElement = document.createElement("div");
     chatElement.textContent = message;
     chatElement.className = "player-chat";
-    this.chatContainer.appendChild(chatElement);
+    playerUI.container.appendChild(chatElement);
 
     const chatMessage: ChatMessage = {
       id: `${playerId}-${Date.now()}`,
@@ -103,7 +109,7 @@ export class PlayerUI {
       element: chatElement
     };
 
-    chatMessages.push(chatMessage);
+    playerUI.chatMessages.push(chatMessage);
 
     // Auto-remove after fade duration
     setTimeout(() => {
@@ -112,130 +118,142 @@ export class PlayerUI {
   }
 
   private removeChatMessage(playerId: string, messageId: string): void {
-    const chatMessages = this.playerChats.get(playerId);
-    if (!chatMessages) return;
+    const playerUI = this.playerUIs.get(playerId);
+    if (!playerUI) return;
 
-    const messageIndex = chatMessages.findIndex((chat) => chat.id === messageId);
+    const messageIndex = playerUI.chatMessages.findIndex((chat) => chat.id === messageId);
     if (messageIndex === -1) return;
 
-    const chatMessage = chatMessages[messageIndex];
-    if (this.chatContainer.contains(chatMessage.element)) {
-      this.chatContainer.removeChild(chatMessage.element);
+    const chatMessage = playerUI.chatMessages[messageIndex];
+    if (playerUI.container.contains(chatMessage.element)) {
+      playerUI.container.removeChild(chatMessage.element);
     }
 
-    chatMessages.splice(messageIndex, 1);
+    playerUI.chatMessages.splice(messageIndex, 1);
   }
 
-  public updateNamePosition(nameElement: HTMLDivElement, playerPosition: THREE.Vector3): void {
-    const nameOffset = new THREE.Vector3(0, 1, 0);
-    const worldPosition = playerPosition.clone().add(nameOffset);
+  private calculatePlayerUIPosition(
+    playerId: string,
+    playerPosition?: THREE.Vector3
+  ): { x: number; y: number; visible: boolean; scale: number; opacity: number } {
+    let worldPosition: THREE.Vector3;
 
-    const distance = this.camera.position.distanceTo(playerPosition);
+    // Determine world position based on player type
+    if (playerId === this.localPlayerId) {
+      if (!this.localPlayerPosition) {
+        return { x: 0, y: 0, visible: false, scale: 1, opacity: 0 };
+      }
+      worldPosition = this.localPlayerPosition.clone();
+    } else {
+      if (!playerPosition) {
+        return { x: 0, y: 0, visible: false, scale: 1, opacity: 0 };
+      }
+      worldPosition = playerPosition.clone();
+    }
 
+    // Add offset to position UI above player's head
+    const uiOffset = new THREE.Vector3(0, 1, 0);
+    worldPosition.add(uiOffset);
+
+    // Project to screen space
     const screenPosition = worldPosition.clone().project(this.camera);
 
     const canvas = this.renderer.domElement;
     const x = (screenPosition.x * 0.5 + 0.5) * canvas.clientWidth;
     const y = (screenPosition.y * -0.5 + 0.5) * canvas.clientHeight;
 
+    // Check visibility
     const isVisible =
       screenPosition.z < 1 && x >= -100 && x <= canvas.clientWidth + 100 && y >= -50 && y <= canvas.clientHeight + 50;
 
-    if (isVisible) {
-      const normalizedDistance = Math.max(0, Math.min(1, distance / this.MAX_DISTANCE));
-      const scale = this.MAX_SCALE - normalizedDistance * (this.MAX_SCALE - this.MIN_SCALE);
+    if (!isVisible) {
+      return { x, y, visible: false, scale: 1, opacity: 0 };
+    }
 
-      let opacity = 1;
+    // Calculate scale and opacity based on distance (only for other players)
+    let scale = 1;
+    let opacity = 1;
+
+    if (playerId !== this.localPlayerId && playerPosition) {
+      const distance = this.camera.position.distanceTo(playerPosition);
+      const normalizedDistance = Math.max(0, Math.min(1, distance / this.MAX_DISTANCE));
+      scale = this.MAX_SCALE - normalizedDistance * (this.MAX_SCALE - this.MIN_SCALE);
+
       if (distance > this.FADE_DISTANCE) {
         const fadeRange = this.MAX_DISTANCE - this.FADE_DISTANCE;
         const fadeProgress = Math.min(1, (distance - this.FADE_DISTANCE) / fadeRange);
         opacity = 1 - fadeProgress;
       }
-
-      nameElement.style.left = `${x}px`;
-      nameElement.style.top = `${y}px`;
-      nameElement.style.transform = `translate(-50%, -100%) scale(${scale})`;
-      nameElement.style.opacity = opacity.toString();
-      nameElement.style.display = "block";
-    } else {
-      nameElement.style.display = "none";
     }
+
+    return { x, y, visible: true, scale, opacity };
   }
 
   public updateChatPositions(): void {
-    this.playerChats.forEach((chatMessages, playerId) => {
-      // Handle local player chat differently
-      if (playerId === this.localPlayerId) {
-        this.updateLocalPlayerChatPositions(chatMessages);
+    this.updateAllPositions();
+  }
+
+  private updateAllPositions(): void {
+    this.playerUIs.forEach((playerUI, playerId) => {
+      // Get player position for other players
+      let playerPosition: THREE.Vector3 | undefined;
+      if (playerId !== this.localPlayerId) {
+        // We need to get this from the NetworkManager - for now we'll skip positioning other players here
+        // The NetworkManager will call updatePlayerPosition for each other player
         return;
       }
 
-      const nameElement = this.playerNames.get(playerId);
-      if (!nameElement || nameElement.style.display === "none") {
-        // Hide chat messages if name is not visible
-        chatMessages.forEach((chat) => {
-          chat.element.style.display = "none";
-        });
+      const uiPosition = this.calculatePlayerUIPosition(playerId, playerPosition);
+
+      if (!uiPosition.visible) {
+        playerUI.container.style.display = "none";
         return;
       }
 
-      // Get name element position
-      const nameRect = nameElement.getBoundingClientRect();
-      const nameX = nameRect.left + nameRect.width / 2;
-      const nameY = nameRect.top;
+      // Position the container
+      playerUI.container.style.left = `${uiPosition.x}px`;
+      playerUI.container.style.top = `${uiPosition.y}px`;
+      playerUI.container.style.transform = `translate(-50%, -100%) scale(${uiPosition.scale})`;
+      playerUI.container.style.opacity = uiPosition.opacity.toString();
+      playerUI.container.style.display = "block";
 
-      // Position chat messages above the name, stacking upwards
-      chatMessages.forEach((chat, index) => {
-        const chatY = nameY - (index + 1) * this.CHAT_OFFSET_Y;
-
-        // Calculate fade based on age
-        const age = Date.now() - chat.timestamp;
-        let opacity = 1;
-        if (age > this.CHAT_FADE_START) {
-          const fadeProgress = Math.min(1, (age - this.CHAT_FADE_START) / this.CHAT_FADE_DURATION);
-          opacity = 1 - fadeProgress;
-        }
-
-        chat.element.style.left = `${nameX}px`;
-        chat.element.style.top = `${chatY}px`;
-        chat.element.style.opacity = opacity.toString();
-        chat.element.style.display = "block";
-      });
+      // Update individual chat message positions within the container
+      this.updateChatMessagesInContainer(playerUI);
     });
   }
 
-  private updateLocalPlayerChatPositions(chatMessages: ChatMessage[]): void {
-    // If we don't have the local player position, hide the messages
-    if (!this.localPlayerPosition) {
-      chatMessages.forEach((chat) => {
-        chat.element.style.display = "none";
-      });
+  public updatePlayerPosition(playerId: string, playerPosition: THREE.Vector3): void {
+    const playerUI = this.playerUIs.get(playerId);
+    if (!playerUI) return;
+
+    const uiPosition = this.calculatePlayerUIPosition(playerId, playerPosition);
+
+    if (!uiPosition.visible) {
+      playerUI.container.style.display = "none";
       return;
     }
 
-    // Calculate screen position for local player's head
-    const nameOffset = new THREE.Vector3(0, 1, 0);
-    const worldPosition = this.localPlayerPosition.clone().add(nameOffset);
-    const screenPosition = worldPosition.clone().project(this.camera);
+    // Position the container
+    playerUI.container.style.left = `${uiPosition.x}px`;
+    playerUI.container.style.top = `${uiPosition.y}px`;
+    playerUI.container.style.transform = `translate(-50%, -100%) scale(${uiPosition.scale})`;
+    playerUI.container.style.opacity = uiPosition.opacity.toString();
+    playerUI.container.style.display = "block";
 
-    const canvas = this.renderer.domElement;
-    const x = (screenPosition.x * 0.5 + 0.5) * canvas.clientWidth;
-    const y = (screenPosition.y * -0.5 + 0.5) * canvas.clientHeight;
+    // Update individual chat message positions within the container
+    this.updateChatMessagesInContainer(playerUI);
+  }
 
-    const isVisible =
-      screenPosition.z < 1 && x >= -100 && x <= canvas.clientWidth + 100 && y >= -50 && y <= canvas.clientHeight + 50;
+  private updateChatMessagesInContainer(playerUI: PlayerUIContainer): void {
+    // Position chat messages within the container, stacking upwards from the name
+    let currentOffset = 0;
 
-    if (!isVisible) {
-      chatMessages.forEach((chat) => {
-        chat.element.style.display = "none";
-      });
-      return;
+    // If there's a name element, start above it
+    if (playerUI.nameElement) {
+      currentOffset = -this.CHAT_OFFSET_Y - 10;
     }
 
-    // Position chat messages above the local player's head, stacking upwards
-    chatMessages.forEach((chat, index) => {
-      const chatY = y - (index + 1) * this.CHAT_OFFSET_Y;
-
+    playerUI.chatMessages.forEach((chat, index) => {
       // Calculate fade based on age
       const age = Date.now() - chat.timestamp;
       let opacity = 1;
@@ -244,21 +262,20 @@ export class PlayerUI {
         opacity = 1 - fadeProgress;
       }
 
-      chat.element.style.left = `${x}px`;
-      chat.element.style.top = `${chatY}px`;
+      // Position relative to container
+      chat.element.style.position = "absolute";
+      chat.element.style.left = "50%";
+      chat.element.style.top = `${currentOffset - index * this.CHAT_OFFSET_Y}px`;
+      chat.element.style.transform = "translate(-50%, -100%)";
       chat.element.style.opacity = opacity.toString();
       chat.element.style.display = "block";
     });
   }
 
   public cleanup(): void {
-    if (this.nameContainer && this.nameContainer.parentNode) {
-      this.nameContainer.parentNode.removeChild(this.nameContainer);
+    if (this.uiContainer && this.uiContainer.parentNode) {
+      this.uiContainer.parentNode.removeChild(this.uiContainer);
     }
-    if (this.chatContainer && this.chatContainer.parentNode) {
-      this.chatContainer.parentNode.removeChild(this.chatContainer);
-    }
-    this.playerNames.clear();
-    this.playerChats.clear();
+    this.playerUIs.clear();
   }
 }
