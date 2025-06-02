@@ -10,6 +10,7 @@ export interface InputState {
   actions: {
     fish: boolean;
     reset: boolean;
+    chat: boolean;
   };
   joystick: {
     x: number;
@@ -23,6 +24,8 @@ export interface InputCallbacks {
   onFishRelease?: () => void;
   onResetPress?: () => void;
   onResetRelease?: () => void;
+  onChatPress?: () => void;
+  onChatRelease?: () => void;
 }
 
 export class InputManager {
@@ -36,7 +39,8 @@ export class InputManager {
     },
     actions: {
       fish: false,
-      reset: false
+      reset: false,
+      chat: false
     },
     joystick: {
       x: 0,
@@ -87,6 +91,12 @@ export class InputManager {
             this.callbacks.onResetPress?.();
           }
           break;
+        case "t":
+          if (!this.inputState.actions.chat) {
+            this.inputState.actions.chat = true;
+            this.callbacks.onChatPress?.();
+          }
+          break;
       }
     });
 
@@ -116,6 +126,12 @@ export class InputManager {
             this.callbacks.onResetRelease?.();
           }
           break;
+        case "t":
+          if (this.inputState.actions.chat) {
+            this.inputState.actions.chat = false;
+            this.callbacks.onChatRelease?.();
+          }
+          break;
       }
     });
   }
@@ -137,6 +153,16 @@ export class InputManager {
         this.inputState.actions.fish = false;
         this.callbacks.onFishRelease?.();
       }
+    };
+
+    this.mobileControls.onChatButtonPress = () => {
+      this.inputState.actions.chat = true;
+      this.callbacks.onChatPress?.();
+    };
+
+    this.mobileControls.onChatButtonRelease = () => {
+      this.inputState.actions.chat = false;
+      this.callbacks.onChatRelease?.();
     };
   }
 

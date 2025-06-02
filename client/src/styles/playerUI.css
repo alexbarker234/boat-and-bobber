@@ -111,3 +111,31 @@
 .chat-input:focus {
     border-color: #007bff;
 }
+
+.chat-send-button {
+    background-color: #007bff;
+    padding: 4px 8px;
+    margin-top: 4px;
+    border-radius: 4px;
+    color: white;
+    border: none;
+    transition: background-color 0.1s ease;
+}
+
+.chat-send-button:hover {
+    background-color: #0056b3;
+}
+
+/* Hide chat send button on non-mobile devices */
+@media (min-width: 769px) {
+    .chat-send-button {
+        display: none;
+    }
+}
+
+/* Hide chat label on mobile devices */
+@media (max-width: 768px) {
+    .chat-label {
+        display: none;
+    }
+}

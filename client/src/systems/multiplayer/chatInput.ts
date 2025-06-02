@@ -1,3 +1,5 @@
+import { InputManager } from "../inputManager";
+
 export class ChatInput {
   private chatOverlay!: HTMLDivElement;
   private chatInput!: HTMLInputElement;
@@ -27,18 +29,29 @@ export class ChatInput {
     this.chatInput.placeholder = "Type your message...";
     this.chatInput.maxLength = 100;
 
+    const sendButton = document.createElement("button");
+    sendButton.className = "chat-send-button";
+    sendButton.textContent = "Send";
+    sendButton.type = "button";
+
+    sendButton.addEventListener("click", () => {
+      this.sendMessage();
+    });
+
     chatBox.appendChild(chatLabel);
     chatBox.appendChild(this.chatInput);
+    chatBox.appendChild(sendButton);
     this.chatOverlay.appendChild(chatBox);
     document.body.appendChild(this.chatOverlay);
   }
 
   private setupEventListeners(): void {
-    // TODO input manager
-    document.addEventListener("keydown", (event) => {
-      if (event.key.toLowerCase() === "t" && !this.isOpen) {
-        event.preventDefault();
-        this.openChat();
+    const inputManager = InputManager.getInstance();
+    inputManager.addCallbacks({
+      onChatRelease: () => {
+        if (!this.isOpen) {
+          this.openChat();
+        }
       }
     });
 

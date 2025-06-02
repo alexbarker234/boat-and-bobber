@@ -220,10 +220,9 @@ button {
     }
 }
 
-.mobile-fish-button {
+/* Generic Mobile Button Styles */
+.mobile-button {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
     width: 100px;
     height: 100px;
     background: var(--ui-background);
@@ -231,12 +230,10 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 32px;
     z-index: 1000;
     touch-action: none;
     user-select: none;
     transition: transform 0.1s ease, background-color 0.1s ease;
-    background-image: url('./assets/FishIcon.png');
     background-size: 50%;
     background-repeat: no-repeat;
     background-position: center;
@@ -245,12 +242,28 @@ button {
     image-rendering: crisp-edges;
 }
 
-
-.mobile-fish-button:active {
+.mobile-button:active {
     transform: scale(0.9);
     background-color: rgba(0, 0, 0, 0.8);
 }
 
+.mobile-button.hidden {
+    display: none;
+}
+
+/* Specific button positions and icons */
+.mobile-fish-button {
+    bottom: 20px;
+    right: 20px;
+    background-image: url('./assets/FishIcon.png');
+}
+
+.mobile-chat-button {
+    top: 20px;
+    right: 20px;
+    background-image: url('./assets/ChatIcon.png');
+    font-size: 28px;
+}
 
 /* Joystick Customisation */
 .joystick-zone {

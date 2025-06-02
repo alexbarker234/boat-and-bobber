@@ -1,4 +1,5 @@
 import nipplejs, { EventData, JoystickManager } from "nipplejs";
+import { Main } from "../main";
 
 export interface JoystickState {
   x: number; // -1 to 1
@@ -9,12 +10,15 @@ export interface JoystickState {
 export class MobileControls {
   private joystickManager!: JoystickManager;
   private fishButton!: HTMLButtonElement;
+  private chatButton!: HTMLButtonElement;
   private joystickState: JoystickState = { x: 0, y: 0, active: false };
 
   // Callbacks for input events
   public onJoystickChange?: (state: JoystickState) => void;
   public onFishButtonPress?: () => void;
   public onFishButtonRelease?: () => void;
+  public onChatButtonPress?: () => void;
+  public onChatButtonRelease?: () => void;
 
   constructor() {
     this.createMobileUI();
@@ -44,8 +48,17 @@ export class MobileControls {
 
     // Fish button
     this.fishButton = document.createElement("button");
-    this.fishButton.className = "mobile-fish-button";
+    this.fishButton.className = "mobile-button mobile-fish-button";
     document.body.appendChild(this.fishButton);
+
+    // Chat button
+    this.chatButton = document.createElement("button");
+    this.chatButton.className = "mobile-button mobile-chat-button";
+    document.body.appendChild(this.chatButton);
+
+    if (!Main.getInstance().isMultiplayer()) {
+      this.chatButton.className += " hidden";
+    }
   }
 
   private setupEventListeners() {
@@ -82,6 +95,19 @@ export class MobileControls {
     this.fishButton.addEventListener("click", (e) => {
       e.preventDefault();
     });
+
+    // Chat button events
+    this.chatButton.addEventListener("mousedown", () => {
+      this.onChatButtonPress?.();
+    });
+
+    this.chatButton.addEventListener("mouseup", () => {
+      this.onChatButtonRelease?.();
+    });
+
+    this.chatButton.addEventListener("click", (e) => {
+      e.preventDefault();
+    });
   }
 
   private isMobileDevice(): boolean {
@@ -102,6 +128,9 @@ export class MobileControls {
     }
     if (this.fishButton) {
       this.fishButton.remove();
+    }
+    if (this.chatButton) {
+      this.chatButton.remove();
     }
     // Clean up the joystick zone
     const joystickZone = document.querySelector(".joystick-zone");
