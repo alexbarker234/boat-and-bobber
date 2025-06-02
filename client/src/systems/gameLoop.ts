@@ -1,3 +1,5 @@
+import { Main } from "../main";
+
 export class GameLoop {
   private targetFPS = 60;
   private targetFrameTime = 1000 / this.targetFPS;
@@ -44,6 +46,10 @@ export class GameLoop {
   private gameLoop = (currentTime: number) => {
     if (!this.isRunning) return;
 
+    if (this.lastTime === 0) {
+      this.lastTime = currentTime;
+    }
+
     const deltaTime = currentTime - this.lastTime;
     this.lastTime = currentTime;
 
@@ -59,7 +65,8 @@ export class GameLoop {
       this.tickCount++;
 
       if (++iterations >= maxIterations) {
-        window.location.reload();
+        if (Main.getInstance().isMultiplayer()) window.location.reload();
+
         break;
       }
     }
