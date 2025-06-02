@@ -18,6 +18,8 @@ A relaxing 3D fishing game built with Three.js where you can cast your line, wai
 - **Fishing**: Cast your line and wait for fish to bite
 - **Interactive Controls**: Mouse and keyboard controls
 - **Web-Based**: No downloads required - play directly in your browser
+- **Mobile-Friendly**: Works on all devices (mostly)
+- **Multiplayer**: Play with friends online
 
 ## 🛠️ Built With
 
