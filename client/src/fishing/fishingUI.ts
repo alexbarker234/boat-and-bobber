@@ -60,7 +60,7 @@ export class FishingUI {
         ${
           isMobile
             ? 'Hold the <span class="green-text">Fish Button</span> during green bars, tap on <span class="gold-text">gold notes</span>!'
-            : 'Hold F/SPACE during <span class="green-text">green bars</span>, tap on <span class="gold-text">gold notes</span>!'
+            : 'Hold F during <span class="green-text">green bars</span>, tap on <span class="gold-text">gold notes</span>!'
         }
       </p>
     `;

@@ -20,10 +20,9 @@ export class RhythmGame {
   private startTime: number = 0;
   private isActive: boolean = false;
   private progress: number = 0; // Overall progress (0-100)
-  private startProgress: number = 40;
+  private startProgress: number = 25;
   private targetProgress: number = 80; // Need 80% to succeed
   private onComplete: ((success: boolean) => void) | null = null;
-  private isHolding: boolean = false;
   private lastNoteTime: number = 0;
 
   public start(difficulty: "easy" | "medium" | "hard", onComplete: (success: boolean) => void) {
@@ -31,7 +30,6 @@ export class RhythmGame {
     this.startTime = Date.now();
     this.progress = this.startProgress;
     this.onComplete = onComplete;
-    this.isHolding = false;
     this.lastNoteTime = 0;
     this.notes = [];
 
@@ -82,7 +80,7 @@ export class RhythmGame {
       // Tap note: short duration, big reward
       this.notes.push({
         time: noteTime,
-        duration: 0.2,
+        duration: 0.1,
         type: "tap",
         hit: false
       });
@@ -107,15 +105,10 @@ export class RhythmGame {
       onFishPress: () => {
         if (!this.isActive) return;
 
-        if (!this.isHolding) {
-          this.isHolding = true;
-          this.checkTapHit();
-        }
+        this.checkTapHit();
       },
       onFishRelease: () => {
         if (!this.isActive) return;
-
-        this.isHolding = false;
       }
     });
   }
@@ -124,7 +117,7 @@ export class RhythmGame {
     for (const note of this.notes) {
       if (note.type === "tap" && !note.hit && this.isNoteHit(note)) {
         note.hit = true;
-        this.progress += 30;
+        this.progress += 20;
         break;
       }
     }
@@ -172,16 +165,19 @@ export class RhythmGame {
       currentTime,
       progress: this.progress,
       targetProgress: this.targetProgress,
-      isHolding: this.isHolding
+      isHolding: InputManager.getInstance().getInputState().actions.fish
     };
   }
 
   private updateProgress() {
+    const inputManager = InputManager.getInstance();
+    const isHolding = inputManager.getInputState().actions.fish;
+
     let progressChange = 0;
     let inValidZone = false;
 
     // Check if holding during a valid hold note
-    if (this.isHolding) {
+    if (isHolding) {
       for (const note of this.notes) {
         if (note.type === "hold" && this.isNoteHit(note)) {
           progressChange += 15;
@@ -197,13 +193,13 @@ export class RhythmGame {
     }
 
     // Natural decay when not holding
-    if (!this.isHolding) {
+    if (!isHolding) {
       progressChange -= 5;
     }
 
     // Apply progress change (convert from per-second to per-frame)
     this.progress += progressChange / 60;
-    this.progress = Math.max(-30, Math.min(100, this.progress)); // Clamp between -30 and 100
+    this.progress = Math.clamp(0, this.progress, 100);
   }
 
   private end(success: boolean) {
