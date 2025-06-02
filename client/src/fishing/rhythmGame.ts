@@ -15,6 +15,7 @@ export interface RhythmGameState {
   targetProgress: number;
   isHolding: boolean;
 }
+
 export class RhythmGame {
   private notes: RhythmNote[] = [];
   private startTime: number = 0;
@@ -101,16 +102,13 @@ export class RhythmGame {
   private setupInputListeners() {
     const inputManager = InputManager.getInstance();
 
-    inputManager.addCallbacks({
-      onFishPress: () => {
-        if (!this.isActive) return;
+    // Bind fish action callbacks
+    inputManager.bindActionPress("fish", this.handleFishPress);
+  }
 
-        this.checkTapHit();
-      },
-      onFishRelease: () => {
-        if (!this.isActive) return;
-      }
-    });
+  private handleFishPress() {
+    if (!this.isActive) return;
+    this.checkTapHit();
   }
 
   private checkTapHit() {
@@ -165,13 +163,13 @@ export class RhythmGame {
       currentTime,
       progress: this.progress,
       targetProgress: this.targetProgress,
-      isHolding: InputManager.getInstance().getInputState().actions.fish
+      isHolding: InputManager.getInstance().isActionDown("fish")
     };
   }
 
   private updateProgress() {
     const inputManager = InputManager.getInstance();
-    const isHolding = inputManager.getInputState().actions.fish;
+    const isHolding = inputManager.isActionDown("fish");
 
     let progressChange = 0;
     let inValidZone = false;
@@ -204,13 +202,23 @@ export class RhythmGame {
 
   private end(success: boolean) {
     this.isActive = false;
+    this.cleanup();
 
     if (this.onComplete) {
       this.onComplete(success);
     }
   }
 
+  private cleanup() {
+    const inputManager = InputManager.getInstance();
+    inputManager.unbindActionPress("fish", this.handleFishPress);
+  }
+
   public isGameActive(): boolean {
     return this.isActive;
+  }
+
+  public destroy() {
+    this.cleanup();
   }
 }

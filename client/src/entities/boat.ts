@@ -41,9 +41,7 @@ export class Boat extends PhysicsEntity {
   }
 
   private setupInputCallbacks() {
-    this.inputManager.addCallbacks({
-      onResetPress: () => this.resetBoat()
-    });
+    this.inputManager.bindActionPress("reset", this.resetBoat);
   }
 
   private createMesh() {
@@ -97,10 +95,9 @@ export class Boat extends PhysicsEntity {
   private updateAngularVelocity() {
     const currentAngvel = this.rigidBody.angvel();
     const maxAngularSpeed = 0.5;
-    const inputState = this.inputManager.getInputState();
 
     if (!this.fishingSystem.isFishing()) {
-      if (inputState.movement.left) {
+      if (this.inputManager.isActionDown("left")) {
         const newAngvel = currentAngvel.y + this.rotationSpeed;
         this.rigidBody.setAngvel(
           {
@@ -110,7 +107,7 @@ export class Boat extends PhysicsEntity {
           },
           true
         );
-      } else if (inputState.movement.right) {
+      } else if (this.inputManager.isActionDown("right")) {
         const newAngvel = currentAngvel.y - this.rotationSpeed;
         this.rigidBody.setAngvel(
           {
@@ -134,11 +131,11 @@ export class Boat extends PhysicsEntity {
       new Quaternion(physicsRotation.x, physicsRotation.y, physicsRotation.z, physicsRotation.w)
     );
 
-    const inputState = this.inputManager.getInputState();
-
     if (!this.fishingSystem.isFishing()) {
-      if (inputState.movement.forward || inputState.movement.backward) {
-        const impulse = forward.multiplyScalar(inputState.movement.forward ? this.acceleration : -this.acceleration);
+      if (this.inputManager.isActionDown("forward") || this.inputManager.isActionDown("backward")) {
+        const impulse = forward.multiplyScalar(
+          this.inputManager.isActionDown("forward") ? this.acceleration : -this.acceleration
+        );
         this.rigidBody.applyImpulse({ x: impulse.x, y: 0, z: impulse.z }, true);
       }
     }
@@ -238,6 +235,8 @@ export class Boat extends PhysicsEntity {
   }
 
   public destroy() {
+    // Clean up input callbacks
+    this.inputManager.unbindActionPress("reset", this.resetBoat);
     this.fishingSystem.destroy();
   }
 }

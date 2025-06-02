@@ -34,9 +34,7 @@ export class FishingSystem {
   }
 
   private setupInputCallbacks() {
-    InputManager.getInstance().addCallbacks({
-      onFishPress: () => this.handleFishingPress()
-    });
+    InputManager.getInstance().bindActionPress("fish", this.handleFishingPress);
   }
 
   private addRodToScene() {
@@ -210,8 +208,7 @@ export class FishingSystem {
 
   public destroy() {
     const inputManager = InputManager.getInstance();
-    inputManager.clearCallbacks({
-      onFishPress: () => this.handleFishingPress()
-    });
+    inputManager.unbindActionPress("fish", this.handleFishingPress);
+    this.rhythmGame.destroy();
   }
 }

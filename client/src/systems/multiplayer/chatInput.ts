@@ -47,13 +47,7 @@ export class ChatInput {
 
   private setupEventListeners(): void {
     const inputManager = InputManager.getInstance();
-    inputManager.addCallbacks({
-      onChatRelease: () => {
-        if (!this.isOpen) {
-          this.openChat();
-        }
-      }
-    });
+    inputManager.bindActionRelease("chat", this.handleChatRelease);
 
     // Chat input listeners
     this.chatInput.addEventListener("keydown", (event) => {
@@ -75,6 +69,12 @@ export class ChatInput {
         this.closeChat();
       }
     });
+  }
+
+  private handleChatRelease(): void {
+    if (!this.isOpen) {
+      this.openChat();
+    }
   }
 
   public openChat(): void {
@@ -111,6 +111,9 @@ export class ChatInput {
   }
 
   public cleanup(): void {
+    const inputManager = InputManager.getInstance();
+    inputManager.unbindActionRelease("chat", this.handleChatRelease);
+
     if (this.chatOverlay && this.chatOverlay.parentNode) {
       this.chatOverlay.parentNode.removeChild(this.chatOverlay);
     }

@@ -1,60 +1,30 @@
-import { JoystickState, MobileControls } from "./mobileControls";
+import { MobileControls } from "./mobileControls";
 
-export interface InputState {
-  movement: {
-    forward: boolean;
-    backward: boolean;
-    left: boolean;
-    right: boolean;
-  };
-  actions: {
-    fish: boolean;
-    reset: boolean;
-    chat: boolean;
-  };
-  joystick: {
-    x: number;
-    y: number;
-    active: boolean;
-  };
-}
+export type InputAction = "fish" | "chat" | "jump" | "attack" | "forward" | "backward" | "left" | "right" | "reset";
 
-export interface InputCallbacks {
-  onFishPress?: () => void;
-  onFishRelease?: () => void;
-  onResetPress?: () => void;
-  onResetRelease?: () => void;
-  onChatPress?: () => void;
-  onChatRelease?: () => void;
+type InputCallback = () => void;
+
+interface KeyBindings {
+  onPress: Set<InputCallback>;
+  onRelease: Set<InputCallback>;
 }
 
 export class InputManager {
   private static instance: InputManager;
-  private inputState: InputState = {
-    movement: {
-      forward: false,
-      backward: false,
-      left: false,
-      right: false
-    },
-    actions: {
-      fish: false,
-      reset: false,
-      chat: false
-    },
-    joystick: {
-      x: 0,
-      y: 0,
-      active: false
-    }
-  };
+  private keyStates: Set<string> = new Set(); // Keys currently held down
+  private keyBindings: Map<string, KeyBindings> = new Map(); // key -> bindings
+
+  private actionToKey: Map<InputAction, string> = new Map(); // action -> key
+  private keyToActions: Map<string, Set<InputAction>> = new Map(); // key -> set of actions
+
   private mobileControls: MobileControls;
-  private callbacks: InputCallbacks = {};
 
   private constructor() {
-    this.setupKeyboardControls();
-    this.mobileControls = new MobileControls();
-    this.setupMobileControls();
+    this.setupDefaultKeyBindings();
+    window.addEventListener("keydown", this.handleKeyDown);
+    window.addEventListener("keyup", this.handleKeyUp);
+
+    this.mobileControls = new MobileControls(this);
   }
 
   public static getInstance(): InputManager {
@@ -64,197 +34,154 @@ export class InputManager {
     return InputManager.instance;
   }
 
-  private setupKeyboardControls() {
-    window.addEventListener("keydown", (e) => {
-      switch (e.key.toLowerCase()) {
-        case "w":
-          this.inputState.movement.forward = true;
-          break;
-        case "s":
-          this.inputState.movement.backward = true;
-          break;
-        case "a":
-          this.inputState.movement.left = true;
-          break;
-        case "d":
-          this.inputState.movement.right = true;
-          break;
-        case "f":
-          if (!this.inputState.actions.fish) {
-            this.inputState.actions.fish = true;
-            this.callbacks.onFishPress?.();
-          }
-          break;
-        case "r":
-          if (!this.inputState.actions.reset) {
-            this.inputState.actions.reset = true;
-            this.callbacks.onResetPress?.();
-          }
-          break;
-        case "t":
-          if (!this.inputState.actions.chat) {
-            this.inputState.actions.chat = true;
-            this.callbacks.onChatPress?.();
-          }
-          break;
-      }
-    });
-
-    window.addEventListener("keyup", (e) => {
-      switch (e.key.toLowerCase()) {
-        case "w":
-          this.inputState.movement.forward = false;
-          break;
-        case "s":
-          this.inputState.movement.backward = false;
-          break;
-        case "a":
-          this.inputState.movement.left = false;
-          break;
-        case "d":
-          this.inputState.movement.right = false;
-          break;
-        case "f":
-          if (this.inputState.actions.fish) {
-            this.inputState.actions.fish = false;
-            this.callbacks.onFishRelease?.();
-          }
-          break;
-        case "r":
-          if (this.inputState.actions.reset) {
-            this.inputState.actions.reset = false;
-            this.callbacks.onResetRelease?.();
-          }
-          break;
-        case "t":
-          if (this.inputState.actions.chat) {
-            this.inputState.actions.chat = false;
-            this.callbacks.onChatRelease?.();
-          }
-          break;
-      }
-    });
+  private setupDefaultKeyBindings() {
+    // Set up default key mappings
+    this.bindActionToKey("forward", "w");
+    this.bindActionToKey("backward", "s");
+    this.bindActionToKey("left", "a");
+    this.bindActionToKey("right", "d");
+    this.bindActionToKey("fish", "f");
+    this.bindActionToKey("reset", "r");
+    this.bindActionToKey("chat", "t");
   }
 
-  private setupMobileControls() {
-    this.mobileControls.onJoystickChange = (state: JoystickState) => {
-      this.updateJoystick(state.x, state.y, state.active);
-    };
+  // --- Event Handlers ---
 
-    this.mobileControls.onFishButtonPress = () => {
-      if (!this.inputState.actions.fish) {
-        this.inputState.actions.fish = true;
-        this.callbacks.onFishPress?.();
-      }
-    };
+  private handleKeyDown = (e: KeyboardEvent) => {
+    const key = e.key.toLowerCase();
+    if (!this.keyStates.has(key)) {
+      this.keyStates.add(key);
+      const bindings = this.keyBindings.get(key);
+      bindings?.onPress.forEach((cb) => cb());
+    }
+  };
 
-    this.mobileControls.onFishButtonRelease = () => {
-      if (this.inputState.actions.fish) {
-        this.inputState.actions.fish = false;
-        this.callbacks.onFishRelease?.();
-      }
-    };
+  private handleKeyUp = (e: KeyboardEvent) => {
+    const key = e.key.toLowerCase();
+    if (this.keyStates.has(key)) {
+      this.keyStates.delete(key);
+      const bindings = this.keyBindings.get(key);
+      bindings?.onRelease.forEach((cb) => cb());
+    }
+  };
 
-    this.mobileControls.onChatButtonPress = () => {
-      this.inputState.actions.chat = true;
-      this.callbacks.onChatPress?.();
-    };
+  // --- Key-level Binding ---
 
-    this.mobileControls.onChatButtonRelease = () => {
-      this.inputState.actions.chat = false;
-      this.callbacks.onChatRelease?.();
-    };
+  bindKeyPress(key: string, callback: InputCallback) {
+    this.ensureKeyBinding(key);
+    this.keyBindings.get(key)!.onPress.add(callback);
   }
 
-  // todo, fix this abomination
-  public addCallbacks(callback: InputCallbacks) {
-    // Merge callbacks instead of overwriting
-    Object.keys(callback).forEach((key) => {
-      const callbackKey = key as keyof InputCallbacks;
-      const existingCallback = this.callbacks[callbackKey];
-      const newCallback = callback[callbackKey];
-
-      if (existingCallback && newCallback) {
-        // Create a combined callback that calls both
-        this.callbacks[callbackKey] = (() => {
-          existingCallback();
-          newCallback();
-        }) as any;
-      } else if (newCallback) {
-        // No existing callback, just set the new one
-        this.callbacks[callbackKey] = newCallback;
-      }
-    });
+  unbindKeyPress(key: string, callback: InputCallback) {
+    this.keyBindings.get(key)?.onPress.delete(callback);
   }
 
-  // i have not tested this and i feel like it doesnt work.
-  public clearCallbacks(callbacks: InputCallbacks) {
-    Object.keys(callbacks).forEach((key) => {
-      const callbackKey = key as keyof InputCallbacks;
-      delete this.callbacks[callbackKey];
-    });
+  bindKeyRelease(key: string, callback: InputCallback) {
+    this.ensureKeyBinding(key);
+    this.keyBindings.get(key)!.onRelease.add(callback);
   }
 
-  public updateJoystick(x: number, y: number, active: boolean) {
-    this.inputState.joystick.x = x;
-    this.inputState.joystick.y = y;
-    this.inputState.joystick.active = active;
+  unbindKeyRelease(key: string, callback: InputCallback) {
+    this.keyBindings.get(key)?.onRelease.delete(callback);
+  }
 
-    // Convert joystick input to movement state
-    if (active) {
-      this.inputState.movement.forward = y < -0.3;
-      this.inputState.movement.backward = y > 0.3;
-      this.inputState.movement.left = x < -0.3;
-      this.inputState.movement.right = x > 0.3;
-    } else {
-      // Reset movement when joystick is not active (unless keyboard is being used)
-      if (!this.isKeyboardMovementActive()) {
-        this.inputState.movement.forward = false;
-        this.inputState.movement.backward = false;
-        this.inputState.movement.left = false;
-        this.inputState.movement.right = false;
-      }
+  isKeyDown(key: string): boolean {
+    return this.keyStates.has(key);
+  }
+
+  private ensureKeyBinding(key: string) {
+    if (!this.keyBindings.has(key)) {
+      this.keyBindings.set(key, {
+        onPress: new Set(),
+        onRelease: new Set()
+      });
     }
   }
 
-  private isKeyboardMovementActive(): boolean {
-    // Check if any movement keys are currently pressed
-    // This prevents joystick from overriding keyboard input
-    return false; // For now, we'll let joystick override keyboard
-  }
+  // --- Action-level Binding ---
 
-  public getInputState(): Readonly<InputState> {
-    return this.inputState;
-  }
-
-  public isMovementActive(): boolean {
-    return (
-      this.inputState.movement.forward ||
-      this.inputState.movement.backward ||
-      this.inputState.movement.left ||
-      this.inputState.movement.right
-    );
-  }
-
-  public getMovementVector(): { x: number; y: number } {
-    let x = 0;
-    let y = 0;
-
-    if (this.inputState.movement.left) x -= 1;
-    if (this.inputState.movement.right) x += 1;
-    if (this.inputState.movement.forward) y += 1;
-    if (this.inputState.movement.backward) y -= 1;
-
-    // If joystick is active, use its values instead
-    if (this.inputState.joystick.active) {
-      x = this.inputState.joystick.x;
-      y = -this.inputState.joystick.y; // Invert Y for forward/backward
+  bindActionToKey(action: InputAction, key: string) {
+    this.actionToKey.set(action, key);
+    if (!this.keyToActions.has(key)) {
+      this.keyToActions.set(key, new Set());
     }
+    this.keyToActions.get(key)!.add(action);
+  }
 
-    return { x, y };
+  getKeyForAction(action: InputAction): string | undefined {
+    return this.actionToKey.get(action);
+  }
+
+  isActionDown(action: InputAction): boolean {
+    const key = this.getKeyForAction(action);
+    return key ? this.isKeyDown(key) : false;
+  }
+
+  bindActionPress(action: InputAction, callback: InputCallback) {
+    const key = this.getKeyForAction(action);
+    if (!key) throw new Error(`No key bound to action "${action}"`);
+    this.bindKeyPress(key, callback);
+  }
+
+  unbindActionPress(action: InputAction, callback: InputCallback) {
+    const key = this.getKeyForAction(action);
+    if (key) this.unbindKeyPress(key, callback);
+  }
+
+  bindActionRelease(action: InputAction, callback: InputCallback) {
+    const key = this.getKeyForAction(action);
+    if (!key) throw new Error(`No key bound to action "${action}"`);
+    this.bindKeyRelease(key, callback);
+  }
+
+  unbindActionRelease(action: InputAction, callback: InputCallback) {
+    const key = this.getKeyForAction(action);
+    if (key) this.unbindKeyRelease(key, callback);
+  }
+
+  // --- HTML Button Binding ---
+
+  bindButtonToAction(button: HTMLElement, action: InputAction) {
+    const key = this.getKeyForAction(action);
+    if (!key) throw new Error(`No key bound to action "${action}"`);
+    this.bindButtonToKey(button, key);
+  }
+
+  private bindButtonToKey(button: HTMLElement, key: string) {
+    button.addEventListener("mousedown", () => this.simulateKeyPress(key));
+    button.addEventListener("mouseup", () => this.simulateKeyRelease(key));
+    button.addEventListener("mouseleave", () => this.simulateKeyRelease(key));
+
+    //  handle touch events for mobile
+    button.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      this.simulateKeyPress(key);
+    });
+    button.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      this.simulateKeyRelease(key);
+    });
+  }
+
+  simulateKeyPress(key: string) {
+    if (!this.keyStates.has(key)) {
+      this.keyStates.add(key);
+      const bindings = this.keyBindings.get(key);
+      bindings?.onPress.forEach((cb) => cb());
+    }
+  }
+
+  simulateKeyRelease(key: string) {
+    if (this.keyStates.has(key)) {
+      this.keyStates.delete(key);
+      const bindings = this.keyBindings.get(key);
+      bindings?.onRelease.forEach((cb) => cb());
+    }
   }
 
   public destroy() {
+    window.removeEventListener("keydown", this.handleKeyDown);
+    window.removeEventListener("keyup", this.handleKeyUp);
     this.mobileControls.destroy();
   }
 }
