@@ -233,6 +233,7 @@ export class Boat extends PhysicsEntity {
 
   // Networking
   public updateNetwork() {
+    if (!Main.getInstance().isMultiplayer()) return;
     Main.getInstance().getNetworkManager().sendPlayerUpdate(this.position, this.quaternion, Date.now());
   }
 

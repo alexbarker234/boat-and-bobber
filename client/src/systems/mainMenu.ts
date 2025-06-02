@@ -14,6 +14,7 @@ export class MainMenu {
   private nameInput!: HTMLInputElement;
   private colorPicker!: HTMLInputElement;
   private onStartSingleplayer: (settings: PlayerSettings) => void;
+  private onStartMultiplayer: (settings: PlayerSettings) => void;
   private playerSettings: PlayerSettings;
   private saveManager: SaveManager;
 
@@ -24,8 +25,12 @@ export class MainMenu {
   private animationId!: number;
   private composer!: EffectComposer;
 
-  constructor(onStartSingleplayer: (settings: PlayerSettings) => void) {
+  constructor(
+    onStartSingleplayer: (settings: PlayerSettings) => void,
+    onStartMultiplayer: (settings: PlayerSettings) => void
+  ) {
     this.onStartSingleplayer = onStartSingleplayer;
+    this.onStartMultiplayer = onStartMultiplayer;
     this.saveManager = SaveManager.getInstance();
 
     // Load saved settings or use defaults
@@ -110,7 +115,7 @@ export class MainMenu {
 
         <div class="menu-buttons">
           <button class="menu-btn primary" id="singleplayer-btn">Singleplayer</button>
-          <button class="menu-btn disabled" id="multiplayer-btn" disabled>Multiplayer</button>
+          <button class="menu-btn primary" id="multiplayer-btn">Multiplayer</button>
           <button class="menu-btn disabled" id="options-btn" disabled>Options</button>
         </div>
       </div>
@@ -123,6 +128,7 @@ export class MainMenu {
     this.nameInput = this.menuElement.querySelector("#player-name") as HTMLInputElement;
     this.colorPicker = this.menuElement.querySelector("#boat-color") as HTMLInputElement;
     const singleplayerBtn = this.menuElement.querySelector("#singleplayer-btn") as HTMLButtonElement;
+    const multiplayerBtn = this.menuElement.querySelector("#multiplayer-btn") as HTMLButtonElement;
 
     // Name input handler
     this.nameInput.addEventListener("input", (e) => {
@@ -141,15 +147,12 @@ export class MainMenu {
 
     // Singleplayer button handler
     singleplayerBtn.addEventListener("click", () => {
-      this.startSingleplayer();
+      this.startGame(this.playerSettings, false);
     });
 
-    // Enter key to start game
-    // TODO move this to input manager
-    this.nameInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
-        this.startSingleplayer();
-      }
+    // Multiplayer button handler
+    multiplayerBtn.addEventListener("click", () => {
+      this.startGame(this.playerSettings, true);
     });
   }
 
@@ -157,17 +160,21 @@ export class MainMenu {
     this.saveManager.savePlayerSettings(this.playerSettings);
   }
 
-  private startSingleplayer() {
+  private startGame(settings: PlayerSettings, multiplayer: boolean) {
     // Validate name
-    if (!this.playerSettings.name.trim()) {
-      this.playerSettings.name = "Player";
+    if (!settings.name.trim()) {
+      settings.name = "Player";
       this.nameInput.value = "Player";
     }
 
     this.savePlayerSettings();
 
     this.hide();
-    this.onStartSingleplayer(this.playerSettings);
+    if (multiplayer) {
+      this.onStartMultiplayer(settings);
+    } else {
+      this.onStartSingleplayer(settings);
+    }
   }
 
   public show() {

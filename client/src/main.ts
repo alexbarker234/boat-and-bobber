@@ -30,7 +30,7 @@ export class Main {
   private networkManager!: NetworkManager;
   private gameLoop!: GameLoop;
   private fpsCounter!: FPSCounter;
-
+  private multiplayer = false;
   private constructor() {}
 
   public static getInstance(): Main {
@@ -42,6 +42,10 @@ export class Main {
 
   public getNetworkManager() {
     return this.networkManager;
+  }
+
+  public isMultiplayer() {
+    return this.multiplayer;
   }
 
   private handleWindowResize() {
@@ -77,7 +81,8 @@ export class Main {
     await AssetLoader.getInstance().loadAssets();
   }
 
-  private async initGame(playerSettings: PlayerSettings) {
+  private async initGame(playerSettings: PlayerSettings, multiplayer: boolean) {
+    this.multiplayer = multiplayer;
     this.inputManager = InputManager.getInstance();
 
     const scene = new Scene();
@@ -111,8 +116,10 @@ export class Main {
 
     this.gameLoop.start();
 
-    this.networkManager = new NetworkManager(scene, camera, this.renderer);
-    await this.networkManager.connect();
+    if (multiplayer) {
+      this.networkManager = new NetworkManager(scene, camera, this.renderer);
+      await this.networkManager.connect();
+    }
 
     // todo move this somewhere better
     if (this.sceneManager.boat) {
@@ -124,7 +131,9 @@ export class Main {
   private update(deltaTime: number, currentTime: number) {
     PhysicsManager.getInstance().update();
     this.sceneManager.updateSceneEntities();
-    this.networkManager.update(deltaTime);
+    if (this.multiplayer) {
+      this.networkManager.update(deltaTime);
+    }
     this.cameraController.update(this.sceneManager.boat);
 
     if (this.fpsCounter) {
@@ -133,7 +142,9 @@ export class Main {
   }
 
   private render() {
-    this.networkManager.updateUI();
+    if (this.multiplayer) {
+      this.networkManager.updateUI();
+    }
     this.composer.render();
   }
 
@@ -142,9 +153,16 @@ export class Main {
     this.handleCleanup();
     this.load();
 
-    this.mainMenu = new MainMenu((playerSettings: PlayerSettings) => {
-      this.initGame(playerSettings);
-    });
+    this.mainMenu = new MainMenu(
+      // Singleplayer
+      (playerSettings: PlayerSettings) => {
+        this.initGame(playerSettings, false);
+      },
+      // Multiplayer
+      (playerSettings: PlayerSettings) => {
+        this.initGame(playerSettings, true);
+      }
+    );
 
     this.mainMenu.show();
   }

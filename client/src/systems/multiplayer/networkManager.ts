@@ -17,7 +17,9 @@ interface OtherPlayer {
 }
 
 export class NetworkManager {
-  private client = new Client("ws://localhost:3000");
+  private client = new Client(
+    window.location.hostname === "localhost" ? "ws://localhost:3000" : "wss://bb.server.lexalot.dev"
+  );
   private room?: Room<GameState>;
   private otherPlayers = new Map<string, OtherPlayer>();
   private lastNetworkUpdate = 0;
