@@ -1,9 +1,10 @@
 import { Client, getStateCallbacks, Room } from "colyseus.js";
 import * as THREE from "three";
-import type { GameState } from "../../../server/schema/GameState";
-import type { PlayerUpdateMessage } from "../types/types";
-import { AssetLoader } from "./assetLoader";
-import { SaveManager } from "./saveManager";
+import type { GameState } from "../../../../server/schema/GameState";
+import type { PlayerUpdateMessage } from "../../types/types";
+import { AssetLoader } from "../assetLoader";
+import { SaveManager } from "../saveManager";
+import { PlayerUI } from "./playerUI";
 
 interface OtherPlayer {
   mesh: THREE.Mesh;
@@ -22,36 +23,23 @@ export class NetworkManager {
   private networkUpdateRate = 1000 / 20; // 20 updates per second
 
   // Player representation geometry
-  private playerGeometry!: THREE.BufferGeometry<THREE.NormalBufferAttributes>;
-  private nameContainer!: HTMLDivElement;
-
-  // Distance scaling constants
-  private readonly MIN_SCALE = 0.5;
-  private readonly MAX_SCALE = 1.0;
-  private readonly MAX_DISTANCE = 20;
-  private readonly FADE_DISTANCE = 10;
+  private playerGeometry: THREE.BufferGeometry<THREE.NormalBufferAttributes>;
+  private playerUI: PlayerUI;
 
   constructor(
     private scene: THREE.Scene,
+    // why are these things complaining, they literally get used 2 lines down
+    // @ts-ignore
     private camera: THREE.Camera,
+    // @ts-ignore
     private renderer: THREE.WebGLRenderer
   ) {
     const geometry = AssetLoader.getInstance().getAsset("benchy");
-    if (!geometry) {
-      console.error("Boat model not loaded!");
-      return;
-    }
-    this.playerGeometry = geometry;
-    this.setupNameContainer();
-    this.loadStyles();
-  }
+    this.playerUI = new PlayerUI(camera, renderer);
 
-  private loadStyles() {
-    // Load the CSS file for player names
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = "/src/styles/playerNames.css";
-    document.head.appendChild(link);
+    if (!geometry) throw new Error("Boat model not loaded!");
+
+    this.playerGeometry = geometry;
   }
 
   public async connect(): Promise<void> {
@@ -72,57 +60,6 @@ export class NetworkManager {
         console.log("Retrying connection...");
         this.connect();
       }, 3000);
-    }
-  }
-
-  private setupNameContainer() {
-    // Create container for player names
-    this.nameContainer = document.createElement("div");
-    this.nameContainer.className = "player-name-container";
-    document.body.appendChild(this.nameContainer);
-  }
-
-  private createNameElement(playerName: string): HTMLDivElement {
-    const nameElement = document.createElement("div");
-    nameElement.textContent = playerName;
-    nameElement.className = "player-name";
-
-    this.nameContainer.appendChild(nameElement);
-    return nameElement;
-  }
-  private updateNamePosition(otherPlayer: OtherPlayer) {
-    const nameOffset = new THREE.Vector3(0, 1, 0);
-    const worldPosition = otherPlayer.mesh.position.clone().add(nameOffset);
-
-    const distance = this.camera.position.distanceTo(otherPlayer.mesh.position);
-
-    const screenPosition = worldPosition.clone().project(this.camera);
-
-    const canvas = this.renderer.domElement;
-    const x = (screenPosition.x * 0.5 + 0.5) * canvas.clientWidth;
-    const y = (screenPosition.y * -0.5 + 0.5) * canvas.clientHeight;
-
-    const isVisible =
-      screenPosition.z < 1 && x >= -100 && x <= canvas.clientWidth + 100 && y >= -50 && y <= canvas.clientHeight + 50;
-
-    if (isVisible) {
-      const normalizedDistance = Math.max(0, Math.min(1, distance / this.MAX_DISTANCE));
-      const scale = this.MAX_SCALE - normalizedDistance * (this.MAX_SCALE - this.MIN_SCALE);
-
-      let opacity = 1;
-      if (distance > this.FADE_DISTANCE) {
-        const fadeRange = this.MAX_DISTANCE - this.FADE_DISTANCE;
-        const fadeProgress = Math.min(1, (distance - this.FADE_DISTANCE) / fadeRange);
-        opacity = 1 - fadeProgress;
-      }
-
-      otherPlayer.nameElement.style.left = `${x}px`;
-      otherPlayer.nameElement.style.top = `${y}px`;
-      otherPlayer.nameElement.style.transform = `translate(-50%, -100%) scale(${scale})`;
-      otherPlayer.nameElement.style.opacity = opacity.toString();
-      otherPlayer.nameElement.style.display = "block";
-    } else {
-      otherPlayer.nameElement.style.display = "none";
     }
   }
 
@@ -147,7 +84,7 @@ export class NetworkManager {
       playerMesh.receiveShadow = true;
       this.scene.add(playerMesh);
 
-      const nameElement = this.createNameElement(player.name);
+      const nameElement = this.playerUI.createNameElement(sessionId, player.name);
 
       const otherPlayer: OtherPlayer = {
         mesh: playerMesh,
@@ -188,7 +125,7 @@ export class NetworkManager {
       const otherPlayer = this.otherPlayers.get(sessionId);
       if (otherPlayer) {
         this.scene.remove(otherPlayer.mesh);
-        this.nameContainer.removeChild(otherPlayer.nameElement);
+        this.playerUI.removeNameElement(sessionId);
         this.otherPlayers.delete(sessionId);
       }
     });
@@ -223,7 +160,7 @@ export class NetworkManager {
 
     // Update name positions for all players
     this.otherPlayers.forEach((otherPlayer) => {
-      this.updateNamePosition(otherPlayer);
+      this.playerUI.updateNamePosition(otherPlayer.nameElement, otherPlayer.mesh.position);
     });
   }
 
@@ -251,9 +188,6 @@ export class NetworkManager {
   }
 
   public cleanup() {
-    // Clean up name container when network manager is destroyed
-    if (this.nameContainer && this.nameContainer.parentNode) {
-      this.nameContainer.parentNode.removeChild(this.nameContainer);
-    }
+    this.playerUI.cleanup();
   }
 }
