@@ -5,7 +5,7 @@ import { settings } from "./settings";
 import "./styles/global.css";
 import "./styles/mainMenu.css";
 import "./styles/performanceCounter.css";
-import "./styles/playerNames.css";
+import "./styles/playerUI.css";
 import { AssetLoader } from "./systems/assetLoader";
 import { CameraController } from "./systems/cameraController";
 import { GameLoop } from "./systems/gameLoop";
