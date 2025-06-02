@@ -4,7 +4,7 @@
     "description": "WIP 3D fishing game in Three.js",
     "main": "index.js",
     "scripts": {
-        "build": "cd client && npm i && npm run build && cp -r dist ../build"
+        "build": "cd server && npm i && cd ../client && npm i && npm run build && cp -r dist ../build"
     },
     "author": "",
     "license": "ISC"
