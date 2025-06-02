@@ -22,6 +22,14 @@ export class GameRoom extends Room<GameState> {
         player.quaternionW = message.rotation.w;
       }
     });
+
+    this.onMessage("chatMessage", (client, message) => {
+      console.log(`Chat message from ${client.sessionId}: ${message.message}`);
+      this.broadcast("chatMessage", {
+        playerId: client.sessionId,
+        message: message.message
+      });
+    });
   }
 
   onJoin(client: Client, options: any) {

@@ -4,6 +4,7 @@ import type { GameState } from "../../../../server/schema/GameState";
 import type { PlayerUpdateMessage } from "../../types/types";
 import { AssetLoader } from "../assetLoader";
 import { SaveManager } from "../saveManager";
+import { ChatInput } from "./chatInput";
 import { PlayerUI } from "./playerUI";
 
 interface OtherPlayer {
@@ -25,6 +26,7 @@ export class NetworkManager {
   // Player representation geometry
   private playerGeometry: THREE.BufferGeometry<THREE.NormalBufferAttributes>;
   private playerUI: PlayerUI;
+  private chatInput: ChatInput;
 
   constructor(
     private scene: THREE.Scene,
@@ -36,10 +38,18 @@ export class NetworkManager {
   ) {
     const geometry = AssetLoader.getInstance().getAsset("benchy");
     this.playerUI = new PlayerUI(camera, renderer);
+    this.chatInput = new ChatInput();
 
     if (!geometry) throw new Error("Boat model not loaded!");
 
     this.playerGeometry = geometry;
+    this.setupChatInput();
+  }
+
+  private setupChatInput(): void {
+    this.chatInput.onSend((message: string) => {
+      this.sendChatMessage(message);
+    });
   }
 
   public async connect(): Promise<void> {
@@ -68,6 +78,11 @@ export class NetworkManager {
 
     console.log("Setting up player listeners");
     const $ = getStateCallbacks(this.room);
+
+    this.room.onMessage("chatMessage", (data: { playerId: string; message: string }) => {
+      console.log("Received chat message:", data);
+      this.playerUI.addChatMessage(data.playerId, data.message);
+    });
 
     $(this.room.state).players.onAdd((player, sessionId) => {
       console.log("Player joined:", sessionId);
@@ -162,6 +177,9 @@ export class NetworkManager {
     this.otherPlayers.forEach((otherPlayer) => {
       this.playerUI.updateNamePosition(otherPlayer.nameElement, otherPlayer.mesh.position);
     });
+
+    // Update chat positions
+    this.playerUI.updateChatPositions();
   }
 
   public sendPlayerUpdate(position: THREE.Vector3, quaternion: THREE.Quaternion, currentTime: number) {
@@ -187,7 +205,20 @@ export class NetworkManager {
     }
   }
 
+  public sendChatMessage(message: string): void {
+    if (!this.room) return;
+    this.room.send("chatMessage", { message });
+
+    // Show our own message immediately
+    this.playerUI.addChatMessage(this.room.sessionId, message);
+  }
+
+  public isChatOpen(): boolean {
+    return this.chatInput.isInputOpen();
+  }
+
   public cleanup() {
     this.playerUI.cleanup();
+    this.chatInput.cleanup();
   }
 }
