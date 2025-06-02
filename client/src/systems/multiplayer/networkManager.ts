@@ -62,6 +62,10 @@ export class NetworkManager {
         color: `#${playerSettings.boatColor.getHexString()}`
       });
       console.log("Connected to server!");
+
+      // Set the local player ID so PlayerUI knows which player is local
+      this.playerUI.setLocalPlayerId(this.room.sessionId);
+
       this.setupPlayerListeners();
     } catch (error) {
       console.error("Failed to connect to server:", error);
@@ -184,6 +188,10 @@ export class NetworkManager {
 
   public sendPlayerUpdate(position: THREE.Vector3, quaternion: THREE.Quaternion, currentTime: number) {
     if (!this.room || !this.room.state) return;
+
+    // Update local player position for chat positioning
+    this.playerUI.setLocalPlayerPosition(position);
+
     // Send network updates at a lower rate
     if (currentTime - this.lastNetworkUpdate > this.networkUpdateRate) {
       const message: PlayerUpdateMessage = {
@@ -208,9 +216,6 @@ export class NetworkManager {
   public sendChatMessage(message: string): void {
     if (!this.room) return;
     this.room.send("chatMessage", { message });
-
-    // Show our own message immediately
-    this.playerUI.addChatMessage(this.room.sessionId, message);
   }
 
   public isChatOpen(): boolean {

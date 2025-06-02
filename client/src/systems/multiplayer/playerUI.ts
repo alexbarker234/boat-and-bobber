@@ -12,6 +12,8 @@ export class PlayerUI {
   private chatContainer!: HTMLDivElement;
   private playerNames = new Map<string, HTMLDivElement>();
   private playerChats = new Map<string, ChatMessage[]>();
+  private localPlayerId?: string;
+  private localPlayerPosition?: THREE.Vector3;
 
   // Distance scaling constants
   private readonly MIN_SCALE = 0.5;
@@ -42,6 +44,14 @@ export class PlayerUI {
     this.chatContainer = document.createElement("div");
     this.chatContainer.className = "player-chat-container";
     document.body.appendChild(this.chatContainer);
+  }
+
+  public setLocalPlayerId(playerId: string): void {
+    this.localPlayerId = playerId;
+  }
+
+  public setLocalPlayerPosition(position: THREE.Vector3): void {
+    this.localPlayerPosition = position.clone();
   }
 
   public createNameElement(playerId: string, playerName: string): HTMLDivElement {
@@ -154,6 +164,12 @@ export class PlayerUI {
 
   public updateChatPositions(): void {
     this.playerChats.forEach((chatMessages, playerId) => {
+      // Handle local player chat differently
+      if (playerId === this.localPlayerId) {
+        this.updateLocalPlayerChatPositions(chatMessages);
+        return;
+      }
+
       const nameElement = this.playerNames.get(playerId);
       if (!nameElement || nameElement.style.display === "none") {
         // Hide chat messages if name is not visible
@@ -179,13 +195,59 @@ export class PlayerUI {
           const fadeProgress = Math.min(1, (age - this.CHAT_FADE_START) / this.CHAT_FADE_DURATION);
           opacity = 1 - fadeProgress;
         }
-        console.log(opacity);
 
         chat.element.style.left = `${nameX}px`;
         chat.element.style.top = `${chatY}px`;
         chat.element.style.opacity = opacity.toString();
         chat.element.style.display = "block";
       });
+    });
+  }
+
+  private updateLocalPlayerChatPositions(chatMessages: ChatMessage[]): void {
+    // If we don't have the local player position, hide the messages
+    if (!this.localPlayerPosition) {
+      chatMessages.forEach((chat) => {
+        chat.element.style.display = "none";
+      });
+      return;
+    }
+
+    // Calculate screen position for local player's head
+    const nameOffset = new THREE.Vector3(0, 1, 0);
+    const worldPosition = this.localPlayerPosition.clone().add(nameOffset);
+    const screenPosition = worldPosition.clone().project(this.camera);
+
+    const canvas = this.renderer.domElement;
+    const x = (screenPosition.x * 0.5 + 0.5) * canvas.clientWidth;
+    const y = (screenPosition.y * -0.5 + 0.5) * canvas.clientHeight;
+
+    const isVisible =
+      screenPosition.z < 1 && x >= -100 && x <= canvas.clientWidth + 100 && y >= -50 && y <= canvas.clientHeight + 50;
+
+    if (!isVisible) {
+      chatMessages.forEach((chat) => {
+        chat.element.style.display = "none";
+      });
+      return;
+    }
+
+    // Position chat messages above the local player's head, stacking upwards
+    chatMessages.forEach((chat, index) => {
+      const chatY = y - (index + 1) * this.CHAT_OFFSET_Y;
+
+      // Calculate fade based on age
+      const age = Date.now() - chat.timestamp;
+      let opacity = 1;
+      if (age > this.CHAT_FADE_START) {
+        const fadeProgress = Math.min(1, (age - this.CHAT_FADE_START) / this.CHAT_FADE_DURATION);
+        opacity = 1 - fadeProgress;
+      }
+
+      chat.element.style.left = `${x}px`;
+      chat.element.style.top = `${chatY}px`;
+      chat.element.style.opacity = opacity.toString();
+      chat.element.style.display = "block";
     });
   }
 
