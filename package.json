@@ -1,0 +1,11 @@
+{
+    "name": "boat-and-bobber",
+    "version": "1.0.0",
+    "description": "WIP 3D fishing game in Three.js",
+    "main": "index.js",
+    "scripts": {
+        "build": "cd client && npm run build && cp -r dist ../build"
+    },
+    "author": "",
+    "license": "ISC"
+}
