@@ -84,24 +84,25 @@ export class MobileControls {
     });
 
     // Fish button events
-    this.fishButton.addEventListener("mousedown", () => {
+    this.fishButton.addEventListener("touchstart", (e) => {
+      e.preventDefault();
       this.onFishButtonPress?.();
     });
 
-    this.fishButton.addEventListener("mouseup", () => {
+    this.fishButton.addEventListener("touchend", (e) => {
+      e.preventDefault();
       this.onFishButtonRelease?.();
     });
-
     this.fishButton.addEventListener("click", (e) => {
       e.preventDefault();
     });
 
     // Chat button events
-    this.chatButton.addEventListener("mousedown", () => {
+    this.chatButton.addEventListener("touchstart", () => {
       this.onChatButtonPress?.();
     });
 
-    this.chatButton.addEventListener("mouseup", () => {
+    this.chatButton.addEventListener("touchend", () => {
       this.onChatButtonRelease?.();
     });
 
