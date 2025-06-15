@@ -1,18 +1,33 @@
 import * as THREE from "three";
-import { BufferGeometry, CylinderGeometry, Line, LineBasicMaterial, Mesh, MeshStandardMaterial, Vector3 } from "three";
+import {
+  BufferGeometry,
+  CylinderGeometry,
+  Line,
+  LineBasicMaterial,
+  Mesh,
+  MeshBasicMaterial,
+  MeshStandardMaterial,
+  PlaneGeometry,
+  TextureLoader,
+  Vector3
+} from "three";
 import { Boat } from "../entities/boat";
+
 export class FishingRod {
   private rodMesh!: Mesh;
   private lineMesh: Line | null = null;
   private hookPosition: Vector3 = new Vector3();
   private isLineOut = false;
   private lineLength = 0;
-  private maxLineLength = 3;
+  private maxLineLength = 2;
   private castSpeed = 0.1;
 
   private rodLength = 0.8;
 
   private boatParent: Boat;
+
+  private fishMesh: Mesh | null = null;
+  private fishOffset = 0;
 
   constructor(boatParent: Boat) {
     this.boatParent = boatParent;
@@ -55,6 +70,12 @@ export class FishingRod {
       const points = [rodTipPosition, this.hookPosition.clone()];
       this.lineMesh.geometry.setFromPoints(points);
     }
+
+    // // Update fish position if it exists
+    // if (this.fishMesh) {
+    //   this.fishMesh.position.copy(this.hookPosition);
+    //   this.fishMesh.position.y = 0.01;
+    // }
   }
 
   public updateCasting(): boolean {
@@ -67,7 +88,7 @@ export class FishingRod {
     // Update hook position - cast to the left of the boat
     const leftDirection = new Vector3(0, 1, 0).applyQuaternion(this.boatParent.quaternion);
     this.hookPosition.copy(this.boatParent.position).add(leftDirection.clone().multiplyScalar(this.lineLength));
-    this.hookPosition.y = -0.5;
+    this.hookPosition.y = -0.001;
 
     return false; // Still casting
   }
@@ -79,6 +100,7 @@ export class FishingRod {
       this.lineMesh.removeFromParent();
       this.lineMesh = null;
     }
+    this.removeFish();
   }
 
   public getHookPosition(): Vector3 {
@@ -103,5 +125,81 @@ export class FishingRod {
     rodOffset.applyQuaternion(boatQuaternion);
     this.rodMesh.position.copy(boatPosition).add(rodOffset);
     this.rodMesh.quaternion.copy(boatQuaternion);
+  }
+
+  public createFishMesh() {
+    if (this.fishMesh) {
+      this.removeFish();
+    }
+    const fishSize = 0.5;
+    const fishGeometry = new PlaneGeometry(fishSize, fishSize);
+
+    // TODO use asset manager
+    const textureLoader = new TextureLoader();
+    const fishTexture = textureLoader.load(`./assets/FishSilhouette.png`);
+
+    const fishMaterial = new MeshBasicMaterial({
+      map: fishTexture,
+      transparent: true,
+      alphaTest: 0.1,
+      side: THREE.DoubleSide
+    });
+    const debugMaterial = new MeshBasicMaterial({ color: 0xff0000 });
+    this.fishMesh = new Mesh(fishGeometry, fishMaterial);
+
+    // Set the rotation pivot to the top-left corner
+    fishGeometry.translate(fishSize / 2, -fishSize / 2, 0);
+
+    this.fishMesh.position.copy(this.hookPosition);
+    this.fishMesh.position.y = 0.001;
+
+    this.fishMesh.rotation.x = -Math.PI / 2;
+    this.fishMesh.rotation.z = Math.random() * Math.PI * 2;
+  }
+
+  // TODO fix this
+  public updateFishSilhouette(isOnHook: boolean) {
+    if (!this.fishMesh) return;
+
+    if (isOnHook) {
+      // Create a biting motion - move back and forth in the direction the fish is facing
+      const time = Date.now() * 0.005; // Control speed of movement
+      const amplitude = 0.2; // How far to move
+
+      // Get the current rotation to determine facing direction
+      const rotation = this.fishMesh.rotation.z;
+
+      // Calculate movement in the direction the fish is facing (based on z rotation)
+      // shit fucking doesnt work though
+      const oscillation = (Math.sin(time) * 0.5 - 0.5) * amplitude;
+      console.log(oscillation);
+      const facingX = Math.cos(rotation) * oscillation;
+      const facingZ = Math.sin(rotation) * oscillation;
+
+      this.fishMesh.position.copy(this.hookPosition);
+      this.fishMesh.position.x += facingX;
+      this.fishMesh.position.z += facingZ;
+      this.fishMesh.position.y = 0.001;
+
+      // Add slight rotation wobble
+      this.fishMesh.rotation.z += 0.01;
+      // this.fishMesh.rotation.z = this.fishMesh.rotation.z + Math.sin(time * 2) * 0.01;
+    } else {
+      // Return to static position
+      this.fishMesh.position.copy(this.hookPosition);
+      this.fishMesh.position.y = 0.01;
+      this.fishMesh.rotation.z = 0;
+    }
+  }
+
+  public removeFish() {
+    if (this.fishMesh) {
+      this.fishMesh.removeFromParent();
+      this.fishMesh = null;
+    }
+  }
+
+  public getFishMesh(): Mesh | null {
+    return this.fishMesh;
   }
 }

@@ -26,6 +26,9 @@ export class RhythmGame {
   private onComplete: ((success: boolean) => void) | null = null;
   private lastNoteTime: number = 0;
 
+  // Callbacks
+  private fishPressCallback = () => this.handleFishPress();
+
   public start(difficulty: "easy" | "medium" | "hard", onComplete: (success: boolean) => void) {
     this.isActive = true;
     this.startTime = Date.now();
@@ -103,7 +106,7 @@ export class RhythmGame {
     const inputManager = InputManager.getInstance();
 
     // Bind fish action callbacks
-    inputManager.bindActionPress("fish", this.handleFishPress);
+    inputManager.bindActionPress("fish", this.fishPressCallback);
   }
 
   private handleFishPress() {
@@ -211,7 +214,7 @@ export class RhythmGame {
 
   private cleanup() {
     const inputManager = InputManager.getInstance();
-    inputManager.unbindActionPress("fish", this.handleFishPress);
+    inputManager.unbindActionPress("fish", this.fishPressCallback);
   }
 
   public isGameActive(): boolean {

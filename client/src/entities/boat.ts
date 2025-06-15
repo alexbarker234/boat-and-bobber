@@ -16,6 +16,9 @@ export class Boat extends PhysicsEntity {
   private inputManager: InputManager;
   private playerName: string = "Player";
 
+  // Callbacks
+  private resetBoatCallback = () => this.resetBoat();
+
   // Store initial transform values
   private readonly initialPosition = { x: 0, y: 0.01, z: 0 };
   private readonly initialRotation = { x: 0, y: 0, z: 0, w: 1 };
@@ -41,7 +44,7 @@ export class Boat extends PhysicsEntity {
   }
 
   private setupInputCallbacks() {
-    this.inputManager.bindActionPress("reset", this.resetBoat);
+    this.inputManager.bindActionPress("reset", this.resetBoatCallback);
   }
 
   private createMesh() {
@@ -236,7 +239,7 @@ export class Boat extends PhysicsEntity {
 
   public destroy() {
     // Clean up input callbacks
-    this.inputManager.unbindActionPress("reset", this.resetBoat);
+    this.inputManager.unbindActionPress("reset", this.resetBoatCallback);
     this.fishingSystem.destroy();
   }
 }

@@ -21,6 +21,8 @@ export class FishingSystem {
   private scene: Scene;
   private boatParent: Boat;
 
+  private fishPressCallback = () => this.handleFishingPress();
+
   constructor(scene: Scene, boatParent: Boat) {
     this.scene = scene;
     this.boatParent = boatParent;
@@ -34,7 +36,7 @@ export class FishingSystem {
   }
 
   private setupInputCallbacks() {
-    InputManager.getInstance().bindActionPress("fish", this.handleFishingPress);
+    InputManager.getInstance().bindActionPress("fish", this.fishPressCallback);
   }
 
   private addRodToScene() {
@@ -123,6 +125,12 @@ export class FishingSystem {
         this.state = "bite";
         this.biteStartTime = Date.now();
         this.ui.showStatus("Fish on the line! Press F quickly!");
+        // TODO move
+        this.rod.createFishMesh();
+        const fishMesh = this.rod.getFishMesh();
+        if (fishMesh) {
+          this.scene.add(fishMesh);
+        }
       } else {
         // Reset wait time for another chance
         this.waitStartTime = Date.now();
@@ -132,10 +140,11 @@ export class FishingSystem {
   }
 
   private updateBite() {
+    this.rod.updateFishSilhouette(true);
     const biteTime = Date.now() - this.biteStartTime;
 
     // Player has 1 second to press F
-    if (biteTime >= 1000) {
+    if (biteTime >= 10000) {
       // Time's up - fish escaped
       this.ui.showStatus("Too slow! The fish got away...");
       setTimeout(() => {
@@ -208,7 +217,7 @@ export class FishingSystem {
 
   public destroy() {
     const inputManager = InputManager.getInstance();
-    inputManager.unbindActionPress("fish", this.handleFishingPress);
+    inputManager.unbindActionPress("fish", this.fishPressCallback);
     this.rhythmGame.destroy();
   }
 }
